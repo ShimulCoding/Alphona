@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="AlponaStudio" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Release">
+				<Option output="bin/Release/AlponaStudio" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-std=c++11" />
+					<Add directory="include" />
+				</Compiler>
+				<Linker>
+					<Add library="freeglut" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="winmm" />
+					<Add library="gdi32" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="include/bezier.h" />
+		<Unit filename="include/canvas_assist.h" />
+		<Unit filename="include/canvas_buffer.h" />
+		<Unit filename="include/colorway_remap.h" />
+		<Unit filename="include/floodfill.h" />
+		<Unit filename="include/frame_cache.h" />
+		<Unit filename="include/frieze_border.h" />
+		<Unit filename="include/generative_composer.h" />
+		<Unit filename="include/homography.h" />
+		<Unit filename="include/image_processing.h" />
+		<Unit filename="include/layer_stack.h" />
+		<Unit filename="include/layer_transform.h" />
+		<Unit filename="include/motifs.h" />
+		<Unit filename="include/natural_media.h" />
+		<Unit filename="include/phong_lighting.h" />
+		<Unit filename="include/photo_unwarper.h" />
+		<Unit filename="include/png_writer.h" />
+		<Unit filename="include/projection3d.h" />
+		<Unit filename="include/projector_trace.h" />
+		<Unit filename="include/rasterizer.h" />
+		<Unit filename="include/stencil_bridger.h" />
+		<Unit filename="include/stl_stamp.h" />
+		<Unit filename="include/stroke_craft.h" />
+		<Unit filename="include/svg_writer.h" />
+		<Unit filename="include/timelapse_frames.h" />
+		<Unit filename="include/transforms.h" />
+		<Unit filename="include/viewport_camera.h" />
+		<Unit filename="include/weave_chart.h" />
+		<Unit filename="src/bezier.cpp" />
+		<Unit filename="src/canvas_assist.cpp" />
+		<Unit filename="src/colorway_remap.cpp" />
+		<Unit filename="src/floodfill.cpp" />
+		<Unit filename="src/frame_cache.cpp" />
+		<Unit filename="src/frieze_border.cpp" />
+		<Unit filename="src/generative_composer.cpp" />
+		<Unit filename="src/homography.cpp" />
+		<Unit filename="src/image_processing.cpp" />
+		<Unit filename="src/layer_stack.cpp" />
+		<Unit filename="src/layer_transform.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Unit filename="src/motifs.cpp" />
+		<Unit filename="src/natural_media.cpp" />
+		<Unit filename="src/phong_lighting.cpp" />
+		<Unit filename="src/photo_unwarper.cpp" />
+		<Unit filename="src/projection3d.cpp" />
+		<Unit filename="src/projector_trace.cpp" />
+		<Unit filename="src/rasterizer.cpp" />
+		<Unit filename="src/stencil_bridger.cpp" />
+		<Unit filename="src/stl_stamp.cpp" />
+		<Unit filename="src/stroke_craft.cpp" />
+		<Unit filename="src/timelapse_frames.cpp" />
+		<Unit filename="src/transforms.cpp" />
+		<Unit filename="src/viewport_camera.cpp" />
+		<Unit filename="src/weave_chart.cpp" />
+	</Project>
+</CodeBlocks_project_file>
