@@ -229,6 +229,49 @@ export function rotateOperationAroundPoint(
   return { ...op, seed: rt(op.seed) };
 }
 
+export type MirrorAxis = 'horizontal' | 'vertical';
+
+/**
+ * Mirrors a single DrawOperation horizontally (left <-> right across origin.x)
+ * or vertically (top <-> bottom across origin.y). Preserves locked operations unchanged.
+ */
+export function mirrorOperation(
+  op: DrawOperation,
+  axis: MirrorAxis,
+  origin: Point2D = { x: 360, y: 360 }
+): DrawOperation {
+  if (op.locked) return op;
+  const flipX = axis === 'horizontal';
+  const flipY = axis === 'vertical';
+  const mirrorPt = (p: Point2D): Point2D => ({
+    x: flipX ? 2 * origin.x - p.x : p.x,
+    y: flipY ? 2 * origin.y - p.y : p.y,
+  });
+
+  if (op.kind === 'line') {
+    return { ...op, p0: mirrorPt(op.p0), p1: mirrorPt(op.p1) };
+  }
+  if (op.kind === 'circle') {
+    return { ...op, center: mirrorPt(op.center) };
+  }
+  if (op.kind === 'polygon') {
+    return { ...op, vertices: op.vertices.map(mirrorPt) };
+  }
+  if (op.kind === 'freehand') {
+    return { ...op, points: op.points.map(mirrorPt) };
+  }
+  if (op.kind === 'bezier') {
+    return {
+      ...op,
+      p0: mirrorPt(op.p0),
+      p1: mirrorPt(op.p1),
+      p2: mirrorPt(op.p2),
+      p3: mirrorPt(op.p3),
+    };
+  }
+  return { ...op, seed: mirrorPt(op.seed) };
+}
+
 /**
  * Replaces an unlocked operation by id with its transformed version.
  */

@@ -187,4 +187,37 @@ LayerStrokeOp rotateLayerOpAroundPoint(
     return out;
 }
 
+LayerStrokeOp mirrorLayerOp(
+    const LayerStrokeOp& op,
+    bool flipHorizontal,
+    bool flipVertical,
+    Point2D origin
+) {
+    if (op.locked || (!flipHorizontal && !flipVertical)) return op;
+    auto mirrorPt = [&](Point2D p) -> Point2D {
+        return {
+            flipHorizontal ? (2.0 * origin.x - p.x) : p.x,
+            flipVertical ? (2.0 * origin.y - p.y) : p.y
+        };
+    };
+
+    LayerStrokeOp out = op;
+    if (out.kind == LayerOpKind::Line) {
+        out.p0 = mirrorPt(out.p0);
+        out.p1 = mirrorPt(out.p1);
+    } else if (out.kind == LayerOpKind::Circle || out.kind == LayerOpKind::Fill) {
+        out.p0 = mirrorPt(out.p0);
+    } else if (out.kind == LayerOpKind::Polygon || out.kind == LayerOpKind::Freehand) {
+        for (size_t i = 0; i < out.points.size(); ++i) {
+            out.points[i] = mirrorPt(out.points[i]);
+        }
+    } else if (out.kind == LayerOpKind::Bezier) {
+        out.p0 = mirrorPt(out.p0);
+        out.p1 = mirrorPt(out.p1);
+        out.p2 = mirrorPt(out.p2);
+        out.p3 = mirrorPt(out.p3);
+    }
+    return out;
+}
+
 } // namespace alpona

@@ -50,6 +50,17 @@ LayerStrokeOp rotateLayerOpAroundPoint(
     Point2D origin
 );
 
+/**
+ * Mirrors an unlocked LayerStrokeOp horizontally (left <-> right across origin.x)
+ * and/or vertically (top <-> bottom across origin.y).
+ */
+LayerStrokeOp mirrorLayerOp(
+    const LayerStrokeOp& op,
+    bool flipHorizontal,
+    bool flipVertical,
+    Point2D origin = {360.0, 360.0}
+);
+
 } // namespace alpona
 
 #endif // ALPONA_LAYER_TRANSFORM_H
