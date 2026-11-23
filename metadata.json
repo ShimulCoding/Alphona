@@ -1,0 +1,6 @@
+{
+  "name": "Alpona Studio",
+  "description": "An interactive 2D Bengali Alpona symmetry art and pattern design studio powered by Bresenham rasterization, 2D transformations, Cohen-Sutherland clipping, and iterative seed fill.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
