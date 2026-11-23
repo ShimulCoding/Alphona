@@ -219,6 +219,62 @@ double distanceToLayerOp(const LayerStrokeOp& op, Point2D pt, int canvasSize) {
     return minD;
 }
 
+std::vector<LayerGroupSummary> buildLayerGroupSections(
+    const std::vector<LayerStrokeOp>& stack,
+    const std::vector<std::string>& collapsedGroups
+) {
+    struct Bucket {
+        LayerGroupSummary summary;
+        int maxIndex;
+    };
+    std::vector<Bucket> buckets;
+
+    for (int i = static_cast<int>(stack.size()) - 1; i >= 0; --i) {
+        const LayerStrokeOp& op = stack[static_cast<size_t>(i)];
+        const std::string name = op.group.empty() ? "Motifs" : op.group;
+
+        size_t found = buckets.size();
+        for (size_t b = 0; b < buckets.size(); ++b) {
+            if (buckets[b].summary.name == name) {
+                found = b;
+                break;
+            }
+        }
+        if (found == buckets.size()) {
+            Bucket fresh;
+            fresh.summary.name = name;
+            fresh.summary.total = 0;
+            fresh.summary.visible = 0;
+            fresh.summary.locked = 0;
+            fresh.summary.collapsed =
+                std::find(collapsedGroups.begin(), collapsedGroups.end(), name) !=
+                collapsedGroups.end();
+            fresh.maxIndex = i;
+            buckets.push_back(fresh);
+        }
+
+        Bucket& target = buckets[found];
+        target.summary.layerIds.push_back(op.id);
+        target.summary.total += 1;
+        if (!op.hidden) target.summary.visible += 1;
+        if (op.locked) target.summary.locked += 1;
+        if (i > target.maxIndex) target.maxIndex = i;
+    }
+
+    std::sort(
+        buckets.begin(),
+        buckets.end(),
+        [](const Bucket& a, const Bucket& b) { return a.maxIndex > b.maxIndex; }
+    );
+
+    std::vector<LayerGroupSummary> out;
+    out.reserve(buckets.size());
+    for (size_t i = 0; i < buckets.size(); ++i) {
+        out.push_back(buckets[i].summary);
+    }
+    return out;
+}
+
 int hitTestLayerAtPoint(
     const std::vector<LayerStrokeOp>& stack,
     Point2D pt,

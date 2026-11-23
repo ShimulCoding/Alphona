@@ -78,6 +78,24 @@ bool updateBezierControlPoint(
  */
 double distanceToLayerOp(const LayerStrokeOp& op, Point2D pt, int canvasSize);
 
+struct LayerGroupSummary {
+    std::string name;
+    std::vector<int> layerIds; // ordered top-most z-order first
+    int total;
+    int visible;
+    int locked;
+    bool collapsed;
+};
+
+/**
+ * Groups stack operations into collapsible visual categories ordered by highest
+ * z-order member descending, with member layerIds ordered top-most first.
+ */
+std::vector<LayerGroupSummary> buildLayerGroupSections(
+    const std::vector<LayerStrokeOp>& stack,
+    const std::vector<std::string>& collapsedGroups = {}
+);
+
 /**
  * Hit-tests the layer stack from topmost z-order downward and returns the ID
  * of the first visible operation within `thresholdPx`, or -1 if none match.

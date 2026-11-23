@@ -370,6 +370,119 @@ export function listOperationGroups(
   }));
 }
 
+export interface LayerGroupEntry {
+  op: DrawOperation;
+  index: number; // original z-order index in operations[]
+}
+
+export interface LayerGroupSection {
+  name: string;
+  accentHex: string;
+  entries: LayerGroupEntry[]; // ordered top-most z-order first
+  total: number;
+  visible: number;
+  lockedCount: number;
+}
+
+const LAYER_GROUP_ACCENT_MAP: Record<string, string> = {
+  Core: '#B91C1C', // Sindoor crimson
+  Petals: '#D97706', // Turmeric amber
+  Border: '#2563EB', // Neel indigo
+  Motifs: '#15803D', // Pata green
+};
+
+const FALLBACK_GROUP_ACCENTS = [
+  '#7C3AED',
+  '#0F766E',
+  '#BE185D',
+  '#4338CA',
+];
+
+/**
+ * Returns a deterministic visual accent color hex for a layer group category
+ * so members of the same group share an unmistakable visual indicator.
+ */
+export function getLayerGroupAccent(groupName: string): string {
+  const key = groupName.trim() || 'Motifs';
+  if (LAYER_GROUP_ACCENT_MAP[key]) {
+    return LAYER_GROUP_ACCENT_MAP[key];
+  }
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  return FALLBACK_GROUP_ACCENTS[hash % FALLBACK_GROUP_ACCENTS.length];
+}
+
+/**
+ * Groups operations into collapsible visual categories ordered by highest z-order
+ * member first (matching top-to-bottom canvas stacking), with entries inside each
+ * group also ordered top-most z-order first.
+ */
+export function groupOperationsByCategory(
+  operations: DrawOperation[],
+  groupFilter = 'All'
+): LayerGroupSection[] {
+  const map = new Map<
+    string,
+    { entries: LayerGroupEntry[]; maxIndex: number; visible: number; lockedCount: number }
+  >();
+
+  for (let i = operations.length - 1; i >= 0; i--) {
+    const op = operations[i];
+    const name = op.group && op.group.trim() ? op.group.trim() : 'Motifs';
+    if (groupFilter !== 'All' && name !== groupFilter) continue;
+
+    let bucket = map.get(name);
+    if (!bucket) {
+      bucket = { entries: [], maxIndex: i, visible: 0, lockedCount: 0 };
+      map.set(name, bucket);
+    }
+    bucket.entries.push({ op, index: i });
+    if (i > bucket.maxIndex) bucket.maxIndex = i;
+    if (!op.hidden) bucket.visible++;
+    if (op.locked) bucket.lockedCount++;
+  }
+
+  return Array.from(map.entries())
+    .sort((a, b) => b[1].maxIndex - a[1].maxIndex)
+    .map(([name, bucket]) => ({
+      name,
+      accentHex: getLayerGroupAccent(name),
+      entries: bucket.entries,
+      total: bucket.entries.length,
+      visible: bucket.visible,
+      lockedCount: bucket.lockedCount,
+    }));
+}
+
+export function toggleGroupCollapsed(
+  collapsed: ReadonlySet<string>,
+  groupName: string
+): Set<string> {
+  const next = new Set(collapsed);
+  if (next.has(groupName)) {
+    next.delete(groupName);
+  } else {
+    next.add(groupName);
+  }
+  return next;
+}
+
+export function setAllGroupsCollapsed(
+  groupNames: string[],
+  collapse: boolean
+): Set<string> {
+  return collapse ? new Set(groupNames) : new Set<string>();
+}
+
+export function areAllGroupsCollapsed(
+  collapsed: ReadonlySet<string>,
+  groupNames: string[]
+): boolean {
+  return groupNames.length > 0 && groupNames.every((name) => collapsed.has(name));
+}
+
 /**
  * Updates one of the four Cubic Bézier anchor/control points (P0, P1, P2, P3)
  * on a committed Bézier DrawOperation.
