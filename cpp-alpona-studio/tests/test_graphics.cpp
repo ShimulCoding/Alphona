@@ -784,6 +784,38 @@ int main() {
         assert(std::fabs(lockedMove.p0.x - 360.0) < 1e-6);
     }
 
-    std::cout << "All 38 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
+    // 39. Horizontal & Vertical Mirror Flip (mat3Reflect + mirrorLayerOp + Lock Guard)
+    {
+        Mat3 mx = mat3Reflect(true, false);
+        Mat3 my = mat3Reflect(false, true);
+        Point2D p = {40.0, -25.0};
+        Point2D px = applyMat3(mx, p);
+        Point2D py = applyMat3(my, p);
+        assert(std::fabs(px.x - (-40.0)) < 1e-6 && std::fabs(px.y - (-25.0)) < 1e-6);
+        assert(std::fabs(py.x - 40.0) < 1e-6 && std::fabs(py.y - 25.0) < 1e-6);
+
+        LayerStrokeOp bez;
+        bez.id = 501;
+        bez.kind = LayerOpKind::Bezier;
+        bez.p0 = {400.0, 200.0};
+        bez.p1 = {440.0, 180.0};
+        bez.p2 = {480.0, 220.0};
+        bez.p3 = {420.0, 260.0};
+        bez.symmetry = {1, false};
+
+        LayerStrokeOp bezH = mirrorLayerOp(bez, true, false, {360.0, 360.0});
+        assert(std::fabs(bezH.p0.x - 320.0) < 1e-6 && std::fabs(bezH.p0.y - 200.0) < 1e-6);
+        assert(std::fabs(bezH.p1.x - 280.0) < 1e-6 && std::fabs(bezH.p2.x - 240.0) < 1e-6);
+
+        LayerStrokeOp bezV = mirrorLayerOp(bez, false, true, {360.0, 360.0});
+        assert(std::fabs(bezV.p0.x - 400.0) < 1e-6 && std::fabs(bezV.p0.y - 520.0) < 1e-6);
+        assert(std::fabs(bezV.p3.y - 460.0) < 1e-6);
+
+        bez.locked = true;
+        LayerStrokeOp lockedFlip = mirrorLayerOp(bez, true, true, {360.0, 360.0});
+        assert(std::fabs(lockedFlip.p0.x - 400.0) < 1e-6 && std::fabs(lockedFlip.p0.y - 200.0) < 1e-6);
+    }
+
+    std::cout << "All 39 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
     return 0;
 }

@@ -110,6 +110,7 @@ interface ControlDeckProps {
   onMoveLayerOrder: (id: string, direction: 'up' | 'down') => void;
   onRecolorLayer: (id: string, colorHex: string) => void;
   onDeleteLayer: (id: string) => void;
+  onMirrorSelectedLayer: (axis: 'horizontal' | 'vertical') => void;
   referenceUnderlay: ReferenceUnderlayConfig;
   onChangeReferenceUnderlay: (next: ReferenceUnderlayConfig) => void;
 }
@@ -172,11 +173,13 @@ export function ControlDeck({
   onMoveLayerOrder,
   onRecolorLayer,
   onDeleteLayer,
+  onMirrorSelectedLayer,
   referenceUnderlay,
   onChangeReferenceUnderlay,
 }: ControlDeckProps) {
   const colorwayPhotoRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<DockTab>('draw');
+  const [mirrorTarget, setMirrorTarget] = useState<'auto' | 'canvas'>('auto');
   const [procSeed, setProcSeed] = useState(2026);
   const [includePhyllotaxis, setIncludePhyllotaxis] = useState(true);
   const [includeRhodonea, setIncludeRhodonea] = useState(true);
@@ -203,6 +206,14 @@ export function ControlDeck({
   );
   const colorBreakdown = analyzeHexColor(color);
   const hasTransform = !isIdentityTransform2D(transform2D);
+  const selectedLayerOp = selectedLayerId
+    ? operations.find((op) => op.id === selectedLayerId) ?? null
+    : null;
+  const canMirrorSelectedLayer = Boolean(
+    selectedLayerOp && !selectedLayerOp.locked
+  );
+  const effectiveMirrorScope: 'layer' | 'canvas' =
+    canMirrorSelectedLayer && mirrorTarget !== 'canvas' ? 'layer' : 'canvas';
 
   const dockTabs: Array<{
     id: DockTab;
@@ -672,6 +683,114 @@ export function ControlDeck({
               <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Sync Existing Pattern to {symmetry.sectors} Sectors</span>
             </button>
+
+            <div className="mt-3.5 border-t border-zinc-100 pt-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-zinc-800">
+                  Mirror Flip
+                </span>
+                {canMirrorSelectedLayer ? (
+                  <div
+                    role="group"
+                    aria-label="Mirror flip target"
+                    className="inline-flex rounded border border-zinc-200 bg-zinc-50 p-0.5 text-[11px] font-medium"
+                  >
+                    <button
+                      type="button"
+                      data-testid="mirror-scope-layer"
+                      onClick={() => setMirrorTarget('auto')}
+                      aria-pressed={effectiveMirrorScope === 'layer'}
+                      className={`rounded px-1.5 py-0.5 transition-colors ${
+                        effectiveMirrorScope === 'layer'
+                          ? 'bg-zinc-900 text-white'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                    >
+                      Layer
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="mirror-scope-canvas"
+                      onClick={() => setMirrorTarget('canvas')}
+                      aria-pressed={effectiveMirrorScope === 'canvas'}
+                      className={`rounded px-1.5 py-0.5 transition-colors ${
+                        effectiveMirrorScope === 'canvas'
+                          ? 'bg-zinc-900 text-white'
+                          : 'text-zinc-600 hover:text-zinc-900'
+                      }`}
+                    >
+                      Canvas
+                    </button>
+                  </div>
+                ) : (
+                  <span
+                    data-testid="mirror-scope-label"
+                    className="font-mono text-[11px] text-zinc-500"
+                  >
+                    {selectedLayerOp?.locked
+                      ? 'Layer locked · Canvas'
+                      : 'Canvas view'}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  data-testid="mirror-horizontal-btn"
+                  onClick={() => {
+                    if (effectiveMirrorScope === 'layer') {
+                      onMirrorSelectedLayer('horizontal');
+                    } else {
+                      onChangeTransform2D({
+                        ...transform2D,
+                        flipX: !transform2D.flipX,
+                      });
+                    }
+                  }}
+                  aria-pressed={
+                    effectiveMirrorScope === 'canvas'
+                      ? Boolean(transform2D.flipX)
+                      : undefined
+                  }
+                  className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                    effectiveMirrorScope === 'canvas' && transform2D.flipX
+                      ? 'border-zinc-900 bg-zinc-900 text-white'
+                      : 'border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50'
+                  }`}
+                >
+                  <FlipHorizontal2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span>Horizontal Mirror</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="mirror-vertical-btn"
+                  onClick={() => {
+                    if (effectiveMirrorScope === 'layer') {
+                      onMirrorSelectedLayer('vertical');
+                    } else {
+                      onChangeTransform2D({
+                        ...transform2D,
+                        flipY: !transform2D.flipY,
+                      });
+                    }
+                  }}
+                  aria-pressed={
+                    effectiveMirrorScope === 'canvas'
+                      ? Boolean(transform2D.flipY)
+                      : undefined
+                  }
+                  className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                    effectiveMirrorScope === 'canvas' && transform2D.flipY
+                      ? 'border-zinc-900 bg-zinc-900 text-white'
+                      : 'border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50'
+                  }`}
+                >
+                  <FlipVertical2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span>Vertical Mirror</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* 3. Pigments, Color Model Readout, Weight & Courtyard Surface */}

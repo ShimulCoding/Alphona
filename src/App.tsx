@@ -40,7 +40,9 @@ import {
   type ReferenceUnderlayConfig,
 } from './graphics/layerStack';
 import {
+  mirrorOperation,
   replaceOperationInStack,
+  type MirrorAxis,
 } from './graphics/layerTransform';
 import {
   createBrowserGalleryBackend,
@@ -391,6 +393,29 @@ export default function App() {
       );
     },
     [mutateOperationsWithHistory]
+  );
+
+  const handleMirrorSelectedLayer = useCallback(
+    (axis: MirrorAxis) => {
+      if (!selectedLayerId) return;
+      const target = operations.find((op) => op.id === selectedLayerId);
+      if (!target || target.locked) return;
+      setIsReplaying(false);
+      const origin = { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
+      mutateOperationsWithHistory((prev) =>
+        prev.map((op) =>
+          op.id === selectedLayerId && !op.locked
+            ? mirrorOperation(op, axis, origin)
+            : op
+        )
+      );
+      setExportNotice(
+        axis === 'horizontal'
+          ? 'Selected layer mirrored horizontally.'
+          : 'Selected layer mirrored vertically.'
+      );
+    },
+    [selectedLayerId, operations, mutateOperationsWithHistory]
   );
 
   const handleEditLayer = useCallback((id: string) => {
@@ -1052,6 +1077,7 @@ export default function App() {
                 onMoveLayerOrder={handleMoveLayerOrder}
                 onRecolorLayer={handleRecolorLayer}
                 onDeleteLayer={handleDeleteLayer}
+                onMirrorSelectedLayer={handleMirrorSelectedLayer}
                 referenceUnderlay={referenceUnderlay}
                 onChangeReferenceUnderlay={setReferenceUnderlay}
               />

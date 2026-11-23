@@ -12,6 +12,7 @@ import {
   liangBarskyClip,
   mat3Inverse,
   mat3Multiply,
+  mat3Reflect,
   OUTCODE_INSIDE,
   OUTCODE_LEFT,
   OUTCODE_RIGHT,
@@ -142,6 +143,7 @@ import {
 } from './layerStack';
 import {
   computeOperationBounds,
+  mirrorOperation,
   replaceOperationInStack,
   rotateOperationAroundPoint,
   scaleOperationAroundPoint,
@@ -1620,4 +1622,122 @@ test('Multi-project Gallery CRUD lifecycle & CommittedFrameCache 720->1440 HD re
   assert.equal(cache.fullRebuilds, 1);
   renderWithFrameCache(cache, hdSurf, '#1F1F23', hdOps, null, scaleRenderOptions({}, 2));
   assert.equal(cache.fullRebuilds, 2);
+});
+
+test('46. Horizontal & Vertical Mirror Flip pipeline, frameCache invalidation, SVG/JSON persistence, and per-layer mirrorOperation', () => {
+  // 1. 3x3 homogeneous reflection matrix
+  const mx = mat3Reflect(true, false);
+  const my = mat3Reflect(false, true);
+  const mxy = mat3Reflect(true, true);
+  assert.deepEqual(mx, [-1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  assert.deepEqual(my, [1, 0, 0, 0, -1, 0, 0, 0, 1]);
+  assert.deepEqual(mxy, [-1, 0, 0, 0, -1, 0, 0, 0, 1]);
+
+  const center = { x: 100, y: 100 };
+  const cfgFlipX = { ...DEFAULT_TRANSFORM_2D, flipX: true };
+  const cfgFlipY = { ...DEFAULT_TRANSFORM_2D, flipY: true };
+  assert.equal(isIdentityTransform2D(DEFAULT_TRANSFORM_2D), true);
+  assert.equal(isIdentityTransform2D(cfgFlipX), false);
+  assert.equal(isIdentityTransform2D(cfgFlipY), false);
+
+  const pt = { x: 130, y: 70 };
+  const rx = applyMat3(buildHomogeneousTransform2D(cfgFlipX, center), pt);
+  assert.ok(Math.abs(rx.x - 70) < 1e-6 && Math.abs(rx.y - 70) < 1e-6);
+
+  const ry = applyMat3(buildHomogeneousTransform2D(cfgFlipY, center), pt);
+  assert.ok(Math.abs(ry.x - 130) < 1e-6 && Math.abs(ry.y - 130) < 1e-6);
+
+  // 2. Framebuffer cache invalidates immediately when toggling flipX/flipY and reflects pixels
+  const asymOp: DrawOperation = {
+    id: 'asym-line',
+    kind: 'line',
+    p0: { x: 20, y: 20 },
+    p1: { x: 40, y: 20 },
+    color: '#FAF8F2',
+    thickness: 3,
+    symmetry: { sectors: 1, reflect: false },
+  };
+  const surfA = createSurface(100, 100);
+  const cache = createCommittedFrameCache();
+  renderWithFrameCache(cache, surfA, '#16161B', [asymOp], null, {
+    transform2D: DEFAULT_TRANSFORM_2D,
+  });
+  assert.equal(cache.fullRebuilds, 1);
+  // Pixel at (30, 20) lit; mirrored pixel at (70, 20) dark
+  assert.ok(surfA.data[(20 * 100 + 30) * 4] > 200);
+  assert.ok(surfA.data[(20 * 100 + 70) * 4] < 60);
+
+  renderWithFrameCache(cache, surfA, '#16161B', [asymOp], null, {
+    transform2D: cfgFlipX,
+  });
+  assert.equal(cache.fullRebuilds, 2);
+  // After Horizontal Mirror around x=50, (70, 20) is lit and (30, 20) is dark
+  assert.ok(surfA.data[(20 * 100 + 70) * 4] > 200);
+  assert.ok(surfA.data[(20 * 100 + 30) * 4] < 60);
+
+  renderWithFrameCache(cache, surfA, '#16161B', [asymOp], null, {
+    transform2D: cfgFlipY,
+  });
+  assert.equal(cache.fullRebuilds, 3);
+  // After Vertical Mirror around y=50, (30, 80) is lit and (30, 20) is dark
+  assert.ok(surfA.data[(80 * 100 + 30) * 4] > 200);
+  assert.ok(surfA.data[(20 * 100 + 30) * 4] < 60);
+
+  // 3. SVG export honors flipX reflection
+  const svgFlipped = generateAlponaSvg([asymOp], CANVAS_SURFACES[0], 100, {
+    transform2D: cfgFlipX,
+  });
+  assert.ok(svgFlipped.includes('x1="80"') && svgFlipped.includes('x2="60"'));
+
+  // 4. Project file & draft persistence preserve flipX / flipY
+  const serialized = serializeAlponaProject({
+    surfaceId: 'courtyard',
+    symmetry: { sectors: 8, reflect: true },
+    lineAlgorithm: 'bresenham',
+    clippingWindow: { enabled: false, inset: 110, algorithm: 'cohen-sutherland' },
+    transform2D: { ...DEFAULT_TRANSFORM_2D, flipX: true, flipY: true },
+    operations: [asymOp],
+  });
+  const parsedProject = parseAlponaProject(serialized);
+  assert.equal(parsedProject.transform2D.flipX, true);
+  assert.equal(parsedProject.transform2D.flipY, true);
+
+  // 5. Per-layer mirrorOperation across primitives + locked layer guard
+  const lineH = mirrorOperation(asymOp, 'horizontal', { x: 50, y: 50 });
+  assert.equal(lineH.kind, 'line');
+  if (lineH.kind === 'line') {
+    assert.equal(lineH.p0.x, 80);
+    assert.equal(lineH.p1.x, 60);
+    assert.equal(lineH.p0.y, 20);
+  }
+  const lineV = mirrorOperation(asymOp, 'vertical', { x: 50, y: 50 });
+  if (lineV.kind === 'line') {
+    assert.equal(lineV.p0.x, 20);
+    assert.equal(lineV.p0.y, 80);
+  }
+
+  const bezOp: DrawOperation = {
+    id: 'bez-mirror',
+    kind: 'bezier',
+    p0: { x: 400, y: 200 },
+    p1: { x: 440, y: 180 },
+    p2: { x: 480, y: 220 },
+    p3: { x: 420, y: 260 },
+    color: '#F59E0B',
+    thickness: 3,
+    symmetry: { sectors: 1, reflect: false },
+  };
+  const bezH = mirrorOperation(bezOp, 'horizontal', { x: 360, y: 360 });
+  if (bezH.kind === 'bezier') {
+    assert.equal(bezH.p0.x, 320);
+    assert.equal(bezH.p1.x, 280);
+    assert.equal(bezH.p2.x, 240);
+    assert.equal(bezH.p3.x, 300);
+    assert.equal(bezH.p0.y, 200);
+  }
+
+  // Locked layer remains strictly unchanged
+  const lockedOp: DrawOperation = { ...asymOp, locked: true };
+  const lockedMirrored = mirrorOperation(lockedOp, 'horizontal', { x: 50, y: 50 });
+  assert.deepEqual(lockedMirrored, lockedOp);
 });
