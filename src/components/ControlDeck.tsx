@@ -8,6 +8,7 @@ import {
   ImagePlus,
   Layers,
   Minus,
+  MousePointerClick,
   Move,
   PaintBucket,
   Pencil,
@@ -22,6 +23,7 @@ import { BENGALI_BEZIER_STAMPS } from '../graphics/bezier';
 import { analyzeHexColor } from '../graphics/colorModels';
 import { FESTIVAL_COLORWAYS } from '../graphics/colorwayRemap';
 import {
+  getLayerGroupAccent,
   type ReferenceUnderlayConfig,
 } from '../graphics/layerStack';
 import { ALPONA_MOTIFS } from '../graphics/motifs';
@@ -57,6 +59,9 @@ interface ControlDeckProps {
   onChangeShowDeCasteljau: (v: boolean) => void;
   onStampBezierMotif: (stampId: string) => void;
   selectedLayerId: string | null;
+  selectedGroupName: string | null;
+  selectedGroupLayerIds: string[];
+  onClearGroupSelection: () => void;
   hasBezierOps: boolean;
   labMode: boolean;
   symmetry: SymmetryConfig;
@@ -130,6 +135,9 @@ export function ControlDeck({
   onChangeShowDeCasteljau,
   onStampBezierMotif,
   selectedLayerId,
+  selectedGroupName,
+  selectedGroupLayerIds,
+  onClearGroupSelection,
   hasBezierOps,
   labMode,
   symmetry,
@@ -199,6 +207,12 @@ export function ControlDeck({
     { id: 'edit', label: 'Transform', shortcut: 'V', icon: Move },
     { id: 'fill', label: 'Seed Fill', shortcut: 'B', icon: PaintBucket },
     { id: 'eraser', label: 'Stroke Eraser', shortcut: 'E', icon: Eraser },
+    {
+      id: 'group-select',
+      label: 'Group Select',
+      shortcut: 'A',
+      icon: MousePointerClick,
+    },
   ];
 
   const activeSwatch = ALPONA_PALETTE.find(
@@ -257,6 +271,15 @@ export function ControlDeck({
             >
               <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>{tab.label}</span>
+              {tab.id === 'layers' && selectedGroupName && (
+                <span
+                  aria-label={`Group ${selectedGroupName} selected`}
+                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  style={{
+                    backgroundColor: getLayerGroupAccent(selectedGroupName),
+                  }}
+                />
+              )}
               {typeof tab.count === 'number' && (
                 <span className="font-mono text-[10px] tabular-nums text-zinc-400">
                   {tab.count}
@@ -304,6 +327,7 @@ export function ControlDeck({
                 {tool === 'edit' && 'Move, scale, rotate & curves'}
                 {tool === 'fill' && 'Iterative scanline fill'}
                 {tool === 'eraser' && 'Click any stroke to erase'}
+                {tool === 'group-select' && 'Click stroke to select group'}
               </span>
             </div>
 
@@ -311,6 +335,7 @@ export function ControlDeck({
               {tools.map((item) => {
                 const Icon = item.icon;
                 const active = tool === item.id;
+                const spanFull = item.id === 'group-select';
                 return (
                   <button
                     key={item.id}
@@ -319,6 +344,8 @@ export function ControlDeck({
                     onClick={() => onChangeTool(item.id)}
                     aria-pressed={active}
                     className={`flex h-9 items-center justify-between rounded-md border px-2.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B91C1C] ${
+                      spanFull ? 'col-span-2' : ''
+                    } ${
                       active
                         ? 'border-[#B91C1C] bg-[#B91C1C] text-white'
                         : 'border-zinc-200 bg-zinc-50/70 text-zinc-800 hover:border-zinc-300 hover:bg-zinc-100/80'
@@ -349,6 +376,59 @@ export function ControlDeck({
               </div>
             )}
 
+            {(tool === 'group-select' || selectedGroupName) && (
+              <div
+                data-testid="active-group-selection-card"
+                className="mt-3 rounded-md border border-zinc-200 bg-zinc-50/90 px-3 py-2 text-xs text-zinc-700"
+                style={
+                  selectedGroupName
+                    ? {
+                        borderLeftWidth: '3px',
+                        borderLeftColor: getLayerGroupAccent(selectedGroupName),
+                      }
+                    : undefined
+                }
+              >
+                {selectedGroupName ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-zinc-900">
+                        Group: {selectedGroupName}
+                      </span>
+                      <span className="font-mono text-[11px] tabular-nums text-zinc-600">
+                        {selectedGroupLayerIds.length}{' '}
+                        {selectedGroupLayerIds.length === 1 ? 'layer' : 'layers'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        data-testid="inspect-selected-group-btn"
+                        onClick={() => setActiveTab('layers')}
+                        className="flex-1 rounded border border-zinc-900 bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white transition-colors hover:bg-zinc-800"
+                      >
+                        Inspect in Layers
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="clear-selected-group-btn"
+                        onClick={onClearGroupSelection}
+                        className="rounded border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p>
+                    Click any stroke on the canvas to select all operations
+                    sharing its <strong className="font-semibold">group</strong>{' '}
+                    attribute and highlight them in{' '}
+                    <strong className="font-semibold">Layers</strong>.
+                  </p>
+                )}
+              </div>
+            )}
 
             {tool === 'freehand' && (
               <div className="mt-3 space-y-2 rounded-md border border-zinc-200 bg-zinc-50/80 p-2.5">
@@ -932,6 +1012,9 @@ export function ControlDeck({
             operations={operations}
             activeColor={color}
             selectedLayerId={selectedLayerId}
+            selectedGroupName={selectedGroupName}
+            selectedGroupLayerIds={selectedGroupLayerIds}
+            onClearGroupSelection={onClearGroupSelection}
             onToggleVisibility={onToggleLayerVisibility}
             onToggleLock={onToggleLayerLock}
             onChangeOpacity={onChangeLayerOpacity}

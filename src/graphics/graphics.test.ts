@@ -132,11 +132,13 @@ import {
   duplicateOperationById,
   findNearestBezierOp,
   getLayerGroupAccent,
+  getOperationIdsInGroup,
   groupOperationsByCategory,
   hitTestOperationAtPoint,
   listOperationGroups,
   moveOperationOrder,
   recolorOperation,
+  selectGroupAtPoint,
   setAllGroupsCollapsed,
   setAllOperationsVisibility,
   setOperationOpacity,
@@ -1797,3 +1799,81 @@ test('47. Grouped layer stack categories, deterministic group accents, and colla
   assert.equal(collapsed.size, 0);
   assert.equal(areAllGroupsCollapsed(collapsed, names), false);
 });
+
+test('48. Group Select tool (selectGroupAtPoint) selects all same-group operations across symmetric copies and ignores hidden strokes', () => {
+  const size = 720;
+  const motifOps = ALPONA_MOTIFS[0].buildOperations(size);
+
+  // Padma Lotus outer Border ring has radius ~315 (at x=360+315=675, y=360)
+  const borderIds = getOperationIdsInGroup(motifOps, 'Border');
+  assert.ok(borderIds.length >= 2);
+  const borderHit = selectGroupAtPoint(motifOps, { x: 360 + 315, y: 360 }, size, 22);
+  assert.ok(borderHit !== null);
+  assert.equal(borderHit.groupName, 'Border');
+  assert.equal(borderHit.accentHex, '#2563EB');
+  assert.deepEqual(borderHit.operationIds, borderIds);
+
+  // Custom stack verifying symmetric-copy hit, hidden-layer skip, default "Motifs" normalization, and miss
+  const customOps: DrawOperation[] = [
+    {
+      id: 'core-ring',
+      kind: 'circle',
+      center: { x: 360, y: 360 },
+      radius: 50,
+      color: '#FAF8F2',
+      thickness: 3,
+      symmetry: { sectors: 1, reflect: false },
+      group: 'Core',
+    },
+    {
+      id: 'motif-untagged-1',
+      kind: 'circle',
+      center: { x: 360, y: 360 },
+      radius: 220,
+      color: '#F59E0B',
+      thickness: 3,
+      symmetry: { sectors: 1, reflect: false },
+    },
+    {
+      id: 'motif-untagged-2',
+      kind: 'line',
+      p0: { x: 360, y: 140 },
+      p1: { x: 360, y: 180 },
+      color: '#F59E0B',
+      thickness: 3,
+      symmetry: { sectors: 4, reflect: false },
+      group: '  ',
+    },
+    {
+      id: 'hidden-overlay',
+      kind: 'circle',
+      center: { x: 360, y: 360 },
+      radius: 50,
+      color: '#DC2626',
+      thickness: 4,
+      symmetry: { sectors: 1, reflect: false },
+      group: 'Petals',
+      hidden: true,
+    },
+  ];
+
+  // Clicking 90-degree rotated copy of motif-untagged-2 at (560, 360) selects BOTH Motifs operations
+  const symHit = selectGroupAtPoint(customOps, { x: 560, y: 360 }, size, 18);
+  assert.ok(symHit !== null);
+  assert.equal(symHit.groupName, 'Motifs');
+  assert.equal(symHit.hitOperationId, 'motif-untagged-2');
+  assert.deepEqual(symHit.operationIds, ['motif-untagged-1', 'motif-untagged-2']);
+
+  // Clicking inner ring skips hidden Petals stroke and selects Core
+  const coreHit = selectGroupAtPoint(customOps, { x: 410, y: 360 }, size, 18);
+  assert.ok(coreHit !== null);
+  assert.equal(coreHit.groupName, 'Core');
+  assert.deepEqual(coreHit.operationIds, ['core-ring']);
+
+  // Clicking empty corner returns null
+  const miss = selectGroupAtPoint(customOps, { x: 18, y: 18 }, size, 18);
+  assert.equal(miss, null);
+});
+
+
+

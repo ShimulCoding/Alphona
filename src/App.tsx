@@ -28,6 +28,7 @@ import {
   assignOperationGroup,
   DEFAULT_REFERENCE_UNDERLAY,
   deleteOperationById,
+  getOperationIdsInGroup,
   moveOperationOrder,
   recolorOperation,
   setAllOperationsVisibility,
@@ -118,6 +119,9 @@ export default function App() {
   const galleryBackend = useMemo(() => createBrowserGalleryBackend(), []);
   const [tool, setTool] = useState<DrawingTool>('freehand');
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+  const [selectedGroupName, setSelectedGroupName] = useState<string | null>(
+    null
+  );
   const [polygonShape, setPolygonShape] = useState<PolygonShapeMode>('concave-star');
   const [bezierCurvature, setBezierCurvature] = useState(0.42);
   const [bezierRingFactor, setBezierRingFactor] = useState(0.36);
@@ -301,6 +305,7 @@ export default function App() {
     mutateOperationsWithHistory(() => []);
     setActiveMotifId(null);
     setSelectedLayerId(null);
+    setSelectedGroupName(null);
   }, [mutateOperationsWithHistory]);
 
   const handleToggleLayerVisibility = useCallback(
@@ -419,9 +424,38 @@ export default function App() {
   );
 
   const handleEditLayer = useCallback((id: string) => {
+    setSelectedGroupName(null);
     setSelectedLayerId(id);
     setTool('edit');
   }, []);
+
+  const selectedGroupLayerIds = useMemo(
+    () =>
+      selectedGroupName
+        ? getOperationIdsInGroup(operations, selectedGroupName)
+        : [],
+    [selectedGroupName, operations]
+  );
+
+  const activeSelectedGroupName =
+    selectedGroupName && selectedGroupLayerIds.length > 0
+      ? selectedGroupName
+      : null;
+
+  const handleSelectGroup = useCallback(
+    (groupName: string | null) => {
+      setSelectedGroupName(groupName);
+      if (groupName) {
+        setSelectedLayerId(null);
+        const count = getOperationIdsInGroup(operations, groupName).length;
+        setExportNotice(
+          `Selected group "${groupName}" (${count} ${count === 1 ? 'layer' : 'layers'} highlighted).`
+        );
+        setTimeout(() => setExportNotice(null), 2600);
+      }
+    },
+    [operations]
+  );
 
   const handleToggleLabMode = useCallback(() => {
     setLabMode((prev) => {
@@ -492,6 +526,7 @@ export default function App() {
     setPastSnapshots([]);
     setFutureSnapshots([]);
     setSelectedLayerId(null);
+    setSelectedGroupName(null);
     setActiveMotifId(null);
     setGalleryOpen(false);
     setExportNotice(
@@ -540,6 +575,7 @@ export default function App() {
     setPastSnapshots([]);
     setFutureSnapshots([]);
     setSelectedLayerId(null);
+    setSelectedGroupName(null);
   }, []);
 
   const handleSyncAllStrokes = useCallback(() => {
@@ -568,6 +604,7 @@ export default function App() {
     setPastSnapshots([]);
     setFutureSnapshots([]);
     setSelectedLayerId(null);
+    setSelectedGroupName(null);
   }, []);
 
   const handleApplyColorway = useCallback(
@@ -879,6 +916,7 @@ export default function App() {
       else if (key === 'v') setTool('edit');
       else if (key === 'b') setTool('fill');
       else if (key === 'e') setTool('eraser');
+      else if (key === 'a') setTool('group-select');
       else if (key === 'r') setSymmetry((s) => ({ ...s, reflect: !s.reflect }));
       else if (key === 'g') setShowGuides((g) => !g);
       else if (key === 'x') setShowSymmetryAxes((v) => !v);
@@ -959,11 +997,15 @@ export default function App() {
                   greetingCard={greetingCard}
                   projectError={projectError}
                   selectedLayerId={selectedLayerId}
+                  selectedGroupName={activeSelectedGroupName}
+                  selectedGroupLayerIds={selectedGroupLayerIds}
                   hdPreview={hdPreview}
                   onToggleHdPreview={() => setHdPreview((v) => !v)}
                   onSelectLayer={(id) => {
+                    setSelectedGroupName(null);
                     setSelectedLayerId(id);
                   }}
+                  onSelectGroup={handleSelectGroup}
                   onCommitBezierHandle={handleCommitBezierHandle}
                   onCommitLayerTransform={handleCommitLayerTransform}
                   onCommitOperation={(op) => {
@@ -1029,6 +1071,9 @@ export default function App() {
                 onChangeShowDeCasteljau={setShowDeCasteljau}
                 onStampBezierMotif={handleStampBezierMotif}
                 selectedLayerId={selectedLayerId}
+                selectedGroupName={activeSelectedGroupName}
+                selectedGroupLayerIds={selectedGroupLayerIds}
+                onClearGroupSelection={() => setSelectedGroupName(null)}
                 hasBezierOps={operations.some(
                   (op) => !op.hidden && op.kind === 'bezier'
                 )}

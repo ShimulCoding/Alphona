@@ -14,6 +14,7 @@ import {
   Move,
   Trash2,
   Unlock,
+  X,
 } from 'lucide-react';
 import {
   areAllGroupsCollapsed,
@@ -31,6 +32,9 @@ interface LayerStackPanelProps {
   operations: DrawOperation[];
   activeColor: string;
   selectedLayerId: string | null;
+  selectedGroupName: string | null;
+  selectedGroupLayerIds: string[];
+  onClearGroupSelection?: () => void;
   onToggleVisibility: (id: string) => void;
   onToggleLock: (id: string) => void;
   onChangeOpacity: (id: string, opacity: number) => void;
@@ -51,6 +55,9 @@ export function LayerStackPanel({
   operations,
   activeColor,
   selectedLayerId,
+  selectedGroupName,
+  selectedGroupLayerIds,
+  onClearGroupSelection,
   onToggleVisibility,
   onToggleLock,
   onChangeOpacity,
@@ -84,12 +91,37 @@ export function LayerStackPanel({
     });
   }, [selectedLayerId, operations]);
 
+  // Auto-expand, reveal, and scroll into view a group selected on canvas via the Group Select tool
+  useEffect(() => {
+    if (!selectedGroupName) return;
+    setCollapsedGroups((prev) => {
+      if (!prev.has(selectedGroupName)) return prev;
+      const next = new Set(prev);
+      next.delete(selectedGroupName);
+      return next;
+    });
+    setGroupFilter((cur) =>
+      cur !== 'All' && cur !== selectedGroupName ? 'All' : cur
+    );
+    const slug = slugifyGroup(selectedGroupName);
+    const raf = window.requestAnimationFrame(() => {
+      const el = document.querySelector(
+        `[data-testid="layer-group-section-${slug}"]`
+      );
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [selectedGroupName]);
+
   const hiddenCount = operations.filter((op) => op.hidden).length;
   const visibleCount = operations.length - hiddenCount;
   const groups = listOperationGroups(operations);
   const sections = groupOperationsByCategory(operations, groupFilter);
   const sectionNames = sections.map((s) => s.name);
   const allCollapsed = areAllGroupsCollapsed(collapsedGroups, sectionNames);
+  const selectedGroupIdSet = new Set(selectedGroupLayerIds);
 
   const cycleGroup = (currentGroup: string | undefined): string => {
     const cur = currentGroup ?? 'Motifs';
@@ -244,6 +276,7 @@ export function LayerStackPanel({
             const slug = slugifyGroup(section.name);
             const isCollapsed = collapsedGroups.has(section.name);
             const allGroupHidden = section.visible === 0;
+            const isGroupSelected = selectedGroupName === section.name;
             const panelId = `layer-group-panel-${slug}`;
 
             return (
@@ -252,17 +285,36 @@ export function LayerStackPanel({
                 data-testid={`layer-group-section-${slug}`}
                 data-group-name={section.name}
                 data-collapsed={isCollapsed ? 'true' : 'false'}
-                className="rounded-md overflow-hidden border border-zinc-200/90 bg-zinc-50/60 transition-colors"
+                data-group-selected={isGroupSelected ? 'true' : 'false'}
+                className={`rounded-md overflow-hidden transition-colors ${
+                  isGroupSelected
+                    ? 'border-2 shadow-xs'
+                    : 'border border-zinc-200/90 bg-zinc-50/60'
+                }`}
+                style={
+                  isGroupSelected
+                    ? {
+                        borderColor: section.accentHex,
+                        backgroundColor: `${section.accentHex}0D`,
+                      }
+                    : undefined
+                }
               >
                 {/* Collapsible Group Category Header with Color-Coded Accent Bar */}
                 <div
                   className={`flex items-center justify-between gap-1.5 border-l-[3px] px-2 py-1.5 transition-colors ${
                     allGroupHidden
                       ? 'bg-zinc-100/80 text-zinc-500'
-                      : 'bg-white/95 text-zinc-900'
+                      : isGroupSelected
+                        ? 'text-zinc-950'
+                        : 'bg-white/95 text-zinc-900'
                   } ${isCollapsed ? '' : 'border-b border-zinc-200/80'}`}
                   style={{
                     borderLeftColor: section.accentHex,
+                    backgroundColor:
+                      isGroupSelected && !allGroupHidden
+                        ? `${section.accentHex}1A`
+                        : undefined,
                   }}
                 >
                   <button
@@ -316,6 +368,30 @@ export function LayerStackPanel({
                   </button>
 
                   <div className="flex shrink-0 items-center gap-1">
+                    {isGroupSelected && (
+                      <span
+                        data-testid={`group-selected-indicator-${slug}`}
+                        className="inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-none"
+                        style={{
+                          borderColor: `${section.accentHex}80`,
+                          color: section.accentHex,
+                          backgroundColor: '#FFFFFF',
+                        }}
+                      >
+                        Selected
+                        {onClearGroupSelection && (
+                          <button
+                            type="button"
+                            onClick={onClearGroupSelection}
+                            aria-label={`Clear ${section.name} group selection`}
+                            title="Clear group selection"
+                            className="ml-0.5 inline-flex items-center justify-center rounded hover:opacity-70"
+                          >
+                            <X className="h-2.5 w-2.5" aria-hidden="true" />
+                          </button>
+                        )}
+                      </span>
+                    )}
                     {isCollapsed && (
                       <span className="font-mono text-[10px] text-zinc-400">
                         Collapsed
@@ -361,6 +437,7 @@ export function LayerStackPanel({
                         const opacityPct = Math.round((op.opacity ?? 1) * 100);
                         const groupLabel = op.group ?? 'Motifs';
                         const isSelected = selectedLayerId === op.id;
+                        const isInSelectedGroup = selectedGroupIdSet.has(op.id);
                         const showOpacitySlider =
                           opacityExpandedId === op.id || isSelected;
 
@@ -371,13 +448,25 @@ export function LayerStackPanel({
                             data-group={groupLabel}
                             data-locked={isLocked ? 'true' : 'false'}
                             data-opacity={opacityPct}
+                            data-group-selected={isInSelectedGroup ? 'true' : 'false'}
                             className={`rounded-md border px-1.5 py-1.5 text-xs transition-colors ${
                               isSelected
                                 ? 'border-[#B91C1C] bg-red-50/35'
-                                : isHidden
-                                  ? 'border-zinc-200/80 bg-zinc-50/80 opacity-60'
-                                  : 'border-zinc-200/90 bg-white hover:border-zinc-300'
+                                : isInSelectedGroup
+                                  ? 'shadow-[inset_3px_0_0_var(--grp-accent)]'
+                                  : isHidden
+                                    ? 'border-zinc-200/80 bg-zinc-50/80 opacity-60'
+                                    : 'border-zinc-200/90 bg-white hover:border-zinc-300'
                             }`}
+                            style={
+                              !isSelected && isInSelectedGroup
+                                ? ({
+                                    '--grp-accent': section.accentHex,
+                                    borderColor: `${section.accentHex}99`,
+                                    backgroundColor: `${section.accentHex}14`,
+                                  } as React.CSSProperties)
+                                : undefined
+                            }
                           >
                             <div className="flex items-center justify-between gap-1">
                               <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">

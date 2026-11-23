@@ -838,6 +838,65 @@ int main() {
         assert(sections[2].name == "Petals" && sections[2].collapsed == true && sections[2].visible == 0);
     }
 
-    std::cout << "All 40 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
+    // 41. Group Select Tool Parity (selectGroupAtPoint across symmetric copies, hidden skip & miss)
+    {
+        std::vector<LayerStrokeOp> stack;
+
+        LayerStrokeOp coreRing;
+        coreRing.id = 10;
+        coreRing.kind = LayerOpKind::Circle;
+        coreRing.p0 = {360.0, 360.0};
+        coreRing.radius = 50.0;
+        coreRing.symmetry = {1, false};
+        coreRing.group = "Core";
+
+        LayerStrokeOp borderRing;
+        borderRing.id = 20;
+        borderRing.kind = LayerOpKind::Circle;
+        borderRing.p0 = {360.0, 360.0};
+        borderRing.radius = 240.0;
+        borderRing.symmetry = {1, false};
+        borderRing.group = "Border";
+
+        LayerStrokeOp borderSpoke;
+        borderSpoke.id = 21;
+        borderSpoke.kind = LayerOpKind::Line;
+        borderSpoke.p0 = {360.0, 120.0};
+        borderSpoke.p1 = {360.0, 160.0};
+        borderSpoke.symmetry = {4, false};
+        borderSpoke.group = "Border";
+
+        LayerStrokeOp hiddenTop;
+        hiddenTop.id = 30;
+        hiddenTop.kind = LayerOpKind::Circle;
+        hiddenTop.p0 = {360.0, 360.0};
+        hiddenTop.radius = 50.0;
+        hiddenTop.symmetry = {1, false};
+        hiddenTop.group = "Petals";
+        hiddenTop.hidden = true;
+
+        stack.push_back(coreRing);
+        stack.push_back(borderRing);
+        stack.push_back(borderSpoke);
+        stack.push_back(hiddenTop);
+
+        // Clicking 90-degree symmetric copy of borderSpoke (580, 360) selects ALL Border ops (20 & 21)
+        GroupSelectionResult borderSel = selectGroupAtPoint(stack, {580.0, 360.0}, 720, 18.0);
+        assert(borderSel.groupName == "Border");
+        assert(borderSel.hitLayerId == 21);
+        assert(borderSel.layerIds.size() == 2 && borderSel.layerIds[0] == 20 && borderSel.layerIds[1] == 21);
+
+        // Clicking inner ring skips hiddenTop ("Petals") and selects "Core"
+        GroupSelectionResult coreSel = selectGroupAtPoint(stack, {410.0, 360.0}, 720, 18.0);
+        assert(coreSel.groupName == "Core");
+        assert(coreSel.hitLayerId == 10);
+        assert(coreSel.layerIds.size() == 1 && coreSel.layerIds[0] == 10);
+
+        // Clicking empty canvas corner returns empty miss result
+        GroupSelectionResult miss = selectGroupAtPoint(stack, {20.0, 20.0}, 720, 18.0);
+        assert(miss.groupName.empty() && miss.hitLayerId == -1 && miss.layerIds.empty());
+    }
+
+    std::cout << "All 41 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
     return 0;
 }

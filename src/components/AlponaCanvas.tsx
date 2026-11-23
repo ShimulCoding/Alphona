@@ -39,7 +39,9 @@ import {
 } from '../graphics/canvasAssist';
 import {
   findNearestBezierOp,
+  getLayerGroupAccent,
   hitTestOperationAtPoint,
+  selectGroupAtPoint,
   type BezierHandleKey,
   type ReferenceUnderlayConfig,
 } from '../graphics/layerStack';
@@ -49,10 +51,12 @@ import {
   stabilizeStrokePoints,
 } from '../graphics/strokeCraft';
 import {
+  applyMat3,
   buildHomogeneousTransform2D,
   computeSymmetryReflectionAxes,
   generateSymmetricPoints,
   isIdentityTransform2D,
+  mat3Inverse,
 } from '../graphics/transforms';
 import {
   scaleOperations,
@@ -115,9 +119,12 @@ interface AlponaCanvasProps {
   greetingCard: GreetingCardOptions;
   projectError: string | null;
   selectedLayerId: string | null;
+  selectedGroupName: string | null;
+  selectedGroupLayerIds: string[];
   hdPreview: boolean;
   onToggleHdPreview: () => void;
   onSelectLayer: (id: string | null) => void;
+  onSelectGroup: (groupName: string | null) => void;
   onCommitBezierHandle: (
     id: string,
     handle: BezierHandleKey,
@@ -171,9 +178,12 @@ export function AlponaCanvas({
   greetingCard,
   projectError,
   selectedLayerId,
+  selectedGroupName,
+  selectedGroupLayerIds,
   hdPreview,
   onToggleHdPreview,
   onSelectLayer,
+  onSelectGroup,
   onCommitBezierHandle,
   onCommitLayerTransform,
   onCommitOperation,
@@ -384,7 +394,7 @@ export function AlponaCanvas({
     shiftHeld: boolean,
     lockRadius: number | null
   ): SnapResult => {
-    if (tool === 'eraser' || tool === 'fill') {
+    if (tool === 'eraser' || tool === 'fill' || tool === 'group-select') {
       return {
         point: rawPt,
         snappedAxisAngleDeg: null,
@@ -457,6 +467,25 @@ export function AlponaCanvas({
       if (hitAny) {
         onSelectLayer(hitAny.id);
       }
+      return;
+    }
+
+    if (tool === 'group-select') {
+      setCursorCoord(rawPt);
+      setActiveSnap(null);
+      let queryPt = rawPt;
+      if (!isIdentityTransform2D(transform2D)) {
+        const fwd = buildHomogeneousTransform2D(transform2D, {
+          x: CANVAS_SIZE / 2,
+          y: CANVAS_SIZE / 2,
+        });
+        const inv = mat3Inverse(fwd);
+        if (inv) {
+          queryPt = applyMat3(inv, rawPt);
+        }
+      }
+      const selection = selectGroupAtPoint(operations, queryPt, CANVAS_SIZE, 18);
+      onSelectGroup(selection ? selection.groupName : null);
       return;
     }
 
@@ -891,7 +920,7 @@ export function AlponaCanvas({
                   ? 'cursor-grab active:cursor-grabbing'
                   : tool === 'fill'
                     ? 'cursor-cell'
-                    : tool === 'eraser'
+                    : tool === 'eraser' || tool === 'group-select'
                       ? 'cursor-pointer'
                       : 'cursor-crosshair'
               }`}
@@ -918,7 +947,8 @@ export function AlponaCanvas({
               clippingWindow.enabled ||
               (showDeCasteljau && tool === 'bezier') ||
               Boolean(activeSnap) ||
-              (tool === 'eraser' && Boolean(cursorCoord))) && (
+              (tool === 'eraser' && Boolean(cursorCoord)) ||
+              Boolean(selectedGroupName && selectedGroupLayerIds.length > 0)) && (
               <svg
                 aria-hidden="true"
                 viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}
@@ -1205,7 +1235,104 @@ export function AlponaCanvas({
                   />
                 </g>
               )}
+              {/* Active Group Selection Highlight Overlay */}
+              {selectedGroupName &&
+                selectedGroupLayerIds.length > 0 &&
+                (() => {
+                  const idSet = new Set(selectedGroupLayerIds);
+                  const selectedOps = operations.filter(
+                    (op) => !op.hidden && idSet.has(op.id)
+                  );
+                  if (selectedOps.length === 0) return null;
+                  const accent = getLayerGroupAccent(selectedGroupName);
+                  const mat = !isIdentityTransform2D(transform2D)
+                    ? buildHomogeneousTransform2D(transform2D, {
+                        x: CANVAS_SIZE / 2,
+                        y: CANVAS_SIZE / 2,
+                      })
+                    : null;
+                  const svgMatrix = mat
+                    ? `matrix(${mat[0]} ${mat[3]} ${mat[1]} ${mat[4]} ${mat[2]} ${mat[5]})`
+                    : undefined;
+
+                  return (
+                    <g
+                      data-testid="group-selection-overlay"
+                      data-group={selectedGroupName}
+                      data-count={selectedGroupLayerIds.length}
+                      transform={svgMatrix}
+                    >
+                      {selectedOps.map((op) => {
+                        if (
+                          op.kind === 'circle' &&
+                          Math.hypot(
+                            op.center.x - CANVAS_SIZE / 2,
+                            op.center.y - CANVAS_SIZE / 2
+                          ) < 2
+                        ) {
+                          return (
+                            <circle
+                              key={op.id}
+                              cx={op.center.x}
+                              cy={op.center.y}
+                              r={op.radius}
+                              fill="none"
+                              stroke={accent}
+                              strokeWidth="3"
+                              strokeDasharray="8 5"
+                              opacity="0.92"
+                            />
+                          );
+                        }
+                        const b = computeOperationBounds(op);
+                        return (
+                          <g key={op.id}>
+                            <rect
+                              x={b.minX - 4}
+                              y={b.minY - 4}
+                              width={b.width + 8}
+                              height={b.height + 8}
+                              fill={`${accent}1A`}
+                              stroke={accent}
+                              strokeWidth="2"
+                              strokeDasharray="6 4"
+                            />
+                            <circle
+                              cx={b.cx}
+                              cy={b.cy}
+                              r="4"
+                              fill={accent}
+                              stroke="#FFFFFF"
+                              strokeWidth="1.5"
+                            />
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                })()}
             </svg>
+            )}
+
+            {/* Compact Canvas Group Selection Caption Strip */}
+            {selectedGroupName && selectedGroupLayerIds.length > 0 && (
+              <div
+                data-testid="canvas-group-selection-badge"
+                className="pointer-events-none absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded border border-zinc-900/20 bg-white/95 px-2.5 py-1 text-[11px] font-medium text-zinc-900 shadow-sm backdrop-blur-xs"
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 w-1.5 rounded-[1px]"
+                  style={{
+                    backgroundColor: getLayerGroupAccent(selectedGroupName),
+                  }}
+                />
+                <span>{selectedGroupName}</span>
+                <span className="font-mono text-[10px] tabular-nums text-zinc-500">
+                  · {selectedGroupLayerIds.length}{' '}
+                  {selectedGroupLayerIds.length === 1 ? 'layer' : 'layers'}
+                </span>
+              </div>
             )}
 
             {/* Interactive Post-Placement Editor: Cubic Bézier P0–P3 Handles OR Universal Move/Scale/Rotate Transform Box */}
