@@ -1,0 +1,639 @@
+import mainCpp from '../../cpp-alpona-studio/src/main.cpp?raw';
+import rasterizerCpp from '../../cpp-alpona-studio/src/rasterizer.cpp?raw';
+import transformsCpp from '../../cpp-alpona-studio/src/transforms.cpp?raw';
+import bezierCpp from '../../cpp-alpona-studio/src/bezier.cpp?raw';
+import homographyCpp from '../../cpp-alpona-studio/src/homography.cpp?raw';
+import photoUnwarperCpp from '../../cpp-alpona-studio/src/photo_unwarper.cpp?raw';
+import phongLightingCpp from '../../cpp-alpona-studio/src/phong_lighting.cpp?raw';
+import projectorTraceCpp from '../../cpp-alpona-studio/src/projector_trace.cpp?raw';
+import timelapseFramesCpp from '../../cpp-alpona-studio/src/timelapse_frames.cpp?raw';
+import friezeBorderCpp from '../../cpp-alpona-studio/src/frieze_border.cpp?raw';
+import stencilBridgerCpp from '../../cpp-alpona-studio/src/stencil_bridger.cpp?raw';
+import colorwayRemapCpp from '../../cpp-alpona-studio/src/colorway_remap.cpp?raw';
+import strokeCraftCpp from '../../cpp-alpona-studio/src/stroke_craft.cpp?raw';
+import stlStampCpp from '../../cpp-alpona-studio/src/stl_stamp.cpp?raw';
+import weaveChartCpp from '../../cpp-alpona-studio/src/weave_chart.cpp?raw';
+import generativeComposerCpp from '../../cpp-alpona-studio/src/generative_composer.cpp?raw';
+import naturalMediaCpp from '../../cpp-alpona-studio/src/natural_media.cpp?raw';
+import canvasAssistCpp from '../../cpp-alpona-studio/src/canvas_assist.cpp?raw';
+import layerStackCpp from '../../cpp-alpona-studio/src/layer_stack.cpp?raw';
+import layerTransformCpp from '../../cpp-alpona-studio/src/layer_transform.cpp?raw';
+import viewportCameraCpp from '../../cpp-alpona-studio/src/viewport_camera.cpp?raw';
+import frameCacheCpp from '../../cpp-alpona-studio/src/frame_cache.cpp?raw';
+import cliPipelineCpp from '../../cpp-alpona-studio/src/cli_pipeline.cpp?raw';
+import imageProcessingCpp from '../../cpp-alpona-studio/src/image_processing.cpp?raw';
+import projection3dCpp from '../../cpp-alpona-studio/src/projection3d.cpp?raw';
+import floodfillCpp from '../../cpp-alpona-studio/src/floodfill.cpp?raw';
+import motifsCpp from '../../cpp-alpona-studio/src/motifs.cpp?raw';
+import svgWriterH from '../../cpp-alpona-studio/include/svg_writer.h?raw';
+import pngWriterH from '../../cpp-alpona-studio/include/png_writer.h?raw';
+import canvasBufferH from '../../cpp-alpona-studio/include/canvas_buffer.h?raw';
+import testGraphicsCpp from '../../cpp-alpona-studio/tests/test_graphics.cpp?raw';
+import makefileRaw from '../../cpp-alpona-studio/Makefile?raw';
+import pushSh from '../../cpp-alpona-studio/push_to_github.sh?raw';
+import pushPs1 from '../../cpp-alpona-studio/push_to_github.ps1?raw';
+
+export interface ProjectSourceFile {
+  id: string;
+  path: string;
+  label: string;
+  role: string;
+  owner: string;
+  content: string;
+}
+
+export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
+  {
+    id: 'main',
+    path: 'cpp-alpona-studio/src/main.cpp',
+    label: 'main.cpp',
+    role: 'Upgraded OpenGL/FreeGLUT interactive desktop shell (CommittedFrameCache, dashed mirror axes, magnetic snap, zoom, PNG/SVG/3D STL export)',
+    owner: 'Gobindo Debnath Dipro',
+    content: mainCpp,
+  },
+  {
+    id: 'cli_pipeline',
+    path: 'cpp-alpona-studio/src/cli_pipeline.cpp',
+    label: 'cli_pipeline.cpp',
+    role: 'Standalone zero-OpenGL C++11 headless CLI (AlponaCLI): batch PNG, Vector SVG, 3D Binary .STL, Weave CSV, Frieze, Stencil & Natural Media export',
+    owner: 'Gobindo Debnath Dipro',
+    content: cliPipelineCpp,
+  },
+  {
+    id: 'frame_cache',
+    path: 'cpp-alpona-studio/src/frame_cache.cpp',
+    label: 'frame_cache.cpp',
+    role: 'Committed Framebuffer Cache (O(W×H) memcpy base reuse + single preview overlay for 60fps software rasterization)',
+    owner: 'Gobindo Debnath Dipro',
+    content: frameCacheCpp,
+  },
+  {
+    id: 'bezier',
+    path: 'cpp-alpona-studio/src/bezier.cpp',
+    label: 'bezier.cpp',
+    role: 'Parametric Cubic Bézier evaluation, de Casteljau subdivision & symmetric Bengali motif curve rasterizer',
+    owner: 'Shimul Chowdhury',
+    content: bezierCpp,
+  },
+  {
+    id: 'homography',
+    path: 'cpp-alpona-studio/src/homography.cpp',
+    label: 'homography.cpp',
+    role: '4-corner 3×3 Projective Homography solver (8×8 Gaussian elimination), inverse bilinear warp & chalk-grid blueprint calculator',
+    owner: 'Shimul Chowdhury',
+    content: homographyCpp,
+  },
+  {
+    id: 'photo_unwarper',
+    path: 'cpp-alpona-studio/src/photo_unwarper.cpp',
+    label: 'photo_unwarper.cpp',
+    role: 'CLO-4/6 Street-Photo Alpona Unwarper: inverse homography rectification, Polar Angular Autocorrelation fold detector & D_n symmetry restoration',
+    owner: 'Gobindo Debnath Dipro',
+    content: photoUnwarperCpp,
+  },
+  {
+    id: 'phong_lighting',
+    path: 'cpp-alpona-studio/src/phong_lighting.cpp',
+    label: 'phong_lighting.cpp',
+    role: 'CLO-4/5 Illumination & Shading: Sobel 3×3 stroke-relief normal mapping & Phong vs. Gouraud earthen diya point-light shader',
+    owner: 'Shimul Chowdhury',
+    content: phongLightingCpp,
+  },
+  {
+    id: 'projector_trace',
+    path: 'cpp-alpona-studio/src/projector_trace.cpp',
+    label: 'projector_trace.cpp',
+    role: 'Darkroom Projector & 4-Stage Ring-by-Ring Floor Tracing classifier with pitch-black guide rendering and keystone tilt warp',
+    owner: 'Gobindo Debnath Dipro',
+    content: projectorTraceCpp,
+  },
+  {
+    id: 'timelapse_frames',
+    path: 'cpp-alpona-studio/src/timelapse_frames.cpp',
+    label: 'timelapse_frames.cpp',
+    role: 'Parametric HD Timelapse Reel frame scheduler & progressive stroke/de Casteljau curve frame exporter for video synthesis',
+    owner: 'Shimul Chowdhury',
+    content: timelapseFramesCpp,
+  },
+  {
+    id: 'frieze_border',
+    path: 'cpp-alpona-studio/src/frieze_border.cpp',
+    label: 'frieze_border.cpp',
+    role: 'Saree Paar Border & 90° Anchal Corner Frieze Studio: all 7 1D Frieze symmetry groups (p1..p2mm), polar ring unwrapper & 45° miter fold',
+    owner: 'Gobindo Debnath Dipro',
+    content: friezeBorderCpp,
+  },
+  {
+    id: 'stencil_bridger',
+    path: 'cpp-alpona-studio/src/stencil_bridger.cpp',
+    label: 'stencil_bridger.cpp',
+    role: 'CSE 402 BFS Laser/Cricut Stencil Island Detector, shortest Euclidean (D_e) auto-bridger & 2-layer zero-bridge stencil splitter',
+    owner: 'Shimul Chowdhury',
+    content: stencilBridgerCpp,
+  },
+  {
+    id: 'colorway_remap',
+    path: 'cpp-alpona-studio/src/colorway_remap.cpp',
+    label: 'colorway_remap.cpp',
+    role: 'Deterministic RGB K-Means (k=5) saree/photo palette extractor & frequency-ranked Bengali festival colorway remapper',
+    owner: 'Gobindo Debnath Dipro',
+    content: colorwayRemapCpp,
+  },
+  {
+    id: 'stroke_craft',
+    path: 'cpp-alpona-studio/src/stroke_craft.cpp',
+    label: 'stroke_craft.cpp',
+    role: 'Chaikin corner-cutting stroke stabilizer (levels 0..3) & arc-length tapered Bengali Rice-Paste (Chaler Guro) calligraphy brush',
+    owner: 'Shimul Chowdhury',
+    content: strokeCraftCpp,
+  },
+  {
+    id: 'stl_stamp',
+    path: 'cpp-alpona-studio/src/stl_stamp.cpp',
+    label: 'stl_stamp.cpp',
+    role: '3D-Printable Pitha Mold & Woodblock Stamp exporter: 3×3 Gaussian draft-angle relief heightfield, watertight binary .STL & .OBJ serializer, Phong preview',
+    owner: 'Gobindo Debnath Dipro',
+    content: stlStampCpp,
+  },
+  {
+    id: 'weave_chart',
+    path: 'cpp-alpona-studio/src/weave_chart.cpp',
+    label: 'weave_chart.cpp',
+    role: 'Jamdani Handloom & Nakshi Kantha weave chart quantizer: 4×4 Bayer & Floyd-Steinberg dithering, Bengali thread palettes, meter estimates & CSV export',
+    owner: 'Shimul Chowdhury',
+    content: weaveChartCpp,
+  },
+  {
+    id: 'generative_composer',
+    path: 'cpp-alpona-studio/src/generative_composer.cpp',
+    label: 'generative_composer.cpp',
+    role: 'Procedural Lata-Pata L-System grammar rewriter, Golden-Angle Phyllotaxis (137.508°) seed core & Polar Rhodonea Lotus Alpona composer',
+    owner: 'Gobindo Debnath Dipro',
+    content: generativeComposerCpp,
+  },
+  {
+    id: 'natural_media',
+    path: 'cpp-alpona-studio/src/natural_media.cpp',
+    label: 'natural_media.cpp',
+    role: 'Natural Media Chaler Guro NPR renderer: 3-octave fBm Mati mud, asphalt, Tant cotton & Patachitra substrates with Sobel impasto relief & chalk speckle',
+    owner: 'Shimul Chowdhury',
+    content: naturalMediaCpp,
+  },
+  {
+    id: 'canvas_assist',
+    path: 'cpp-alpona-studio/src/canvas_assist.cpp',
+    label: 'canvas_assist.cpp',
+    role: 'Symmetry reflection axes (Dₙ mirrors / Cₙ rays), Magnetic Snap-to-Axis, concentric guide ring snapping (r = 120/240/330) & Compass Arc Lock',
+    owner: 'Gobindo Debnath Dipro',
+    content: canvasAssistCpp,
+  },
+  {
+    id: 'layer_stack',
+    path: 'cpp-alpona-studio/src/layer_stack.cpp',
+    label: 'layer_stack.cpp',
+    role: 'Interactive Stroke Layer Stack manager (visibility, lock protection, per-layer opacity, z-order reorder, recolor, delete) & symmetric Euclidean hit-test eraser',
+    owner: 'Shimul Chowdhury',
+    content: layerStackCpp,
+  },
+  {
+    id: 'layer_transform',
+    path: 'cpp-alpona-studio/src/layer_transform.cpp',
+    label: 'layer_transform.cpp',
+    role: 'Universal per-layer bounding-box & Move/Scale/Rotate transform engine for all primitives (lines, circles, polygons, freehand, Bézier, fills) with lock guards',
+    owner: 'Gobindo Debnath Dipro',
+    content: layerTransformCpp,
+  },
+  {
+    id: 'viewport_camera',
+    path: 'cpp-alpona-studio/src/viewport_camera.cpp',
+    label: 'viewport_camera.cpp',
+    role: 'Precision Canvas Zoom (1×–4×), anchored zoom-at-point, bounded pan & exact screen-to-canvas viewport coordinate inversion',
+    owner: 'Gobindo Debnath Dipro',
+    content: viewportCameraCpp,
+  },
+  {
+    id: 'svg_writer',
+    path: 'cpp-alpona-studio/include/svg_writer.h',
+    label: 'svg_writer.h',
+    role: 'Zero-dependency C++11 infinite-resolution Vector SVG exporter (lines, circles, polygons & Cubic Bézier paths)',
+    owner: 'Gobindo Debnath Dipro',
+    content: svgWriterH,
+  },
+  {
+    id: 'transforms',
+    path: 'cpp-alpona-studio/src/transforms.cpp',
+    label: 'transforms.cpp',
+    role: 'Cₙ/Dₙ symmetry, 3×3 homogeneous Mat3 + inverse, Cohen-Sutherland, Liang-Barsky, Sutherland-Hodgman & Weiler-Atherton',
+    owner: 'Gobindo Debnath Dipro',
+    content: transformsCpp,
+  },
+  {
+    id: 'rasterizer',
+    path: 'cpp-alpona-studio/src/rasterizer.cpp',
+    label: 'rasterizer.cpp',
+    role: 'Bresenham integer line, DDA line, concave star polygon & midpoint circle',
+    owner: 'Shimul Chowdhury',
+    content: rasterizerCpp,
+  },
+  {
+    id: 'image_processing',
+    path: 'cpp-alpona-studio/src/image_processing.cpp',
+    label: 'image_processing.cpp',
+    role: 'CLO-6 point ops, histogram equalization, 3×3 convolution, Printable Stencil, Pixel Relationships, Binary Morphology Gap Sealer & 2D FFT',
+    owner: 'Gobindo Debnath Dipro',
+    content: imageProcessingCpp,
+  },
+  {
+    id: 'projection3d',
+    path: 'cpp-alpona-studio/src/projection3d.cpp',
+    label: 'projection3d.cpp',
+    role: 'CLO-4/5 Live 3D Courtyard Floor texture projection, Perspective Anomalies (z ≤ -d), Painter’s Algorithm & Z-Buffer',
+    owner: 'Shimul Chowdhury',
+    content: projection3dCpp,
+  },
+  {
+    id: 'floodfill',
+    path: 'cpp-alpona-studio/src/floodfill.cpp',
+    label: 'floodfill.cpp',
+    role: 'Iterative stack-based scanline seed fill with bounds checking',
+    owner: 'Shimul Chowdhury',
+    content: floodfillCpp,
+  },
+  {
+    id: 'motifs',
+    path: 'cpp-alpona-studio/src/motifs.cpp',
+    label: 'motifs.cpp',
+    role: 'Padma Lotus, Boishakhi Sun, Kalka Rosette & Courtyard Chowk presets',
+    owner: 'Shimul Chowdhury',
+    content: motifsCpp,
+  },
+  {
+    id: 'png_writer',
+    path: 'cpp-alpona-studio/include/png_writer.h',
+    label: 'png_writer.h',
+    role: 'Zero-dependency C++11 RGBA PNG exporter with CRC-32 & Adler-32',
+    owner: 'Shimul Chowdhury',
+    content: pngWriterH,
+  },
+  {
+    id: 'canvas_buffer',
+    path: 'cpp-alpona-studio/include/canvas_buffer.h',
+    label: 'canvas_buffer.h',
+    role: 'Core RGBA pixel framebuffer and geometry data structures',
+    owner: 'Shimul Chowdhury',
+    content: canvasBufferH,
+  },
+  {
+    id: 'tests',
+    path: 'cpp-alpona-studio/tests/test_graphics.cpp',
+    label: 'test_graphics.cpp',
+    role: 'Automated C++11 unit test suite verifying all 35 CLO 1–6 graphics, CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
+    owner: 'Gobindo Debnath Dipro',
+    content: testGraphicsCpp,
+  },
+  {
+    id: 'makefile',
+    path: 'cpp-alpona-studio/Makefile',
+    label: 'Makefile',
+    role: 'MinGW / Linux build and test runner targets',
+    owner: 'Shimul Chowdhury',
+    content: makefileRaw,
+  },
+];
+
+export const GIT_PUSH_SCRIPTS = {
+  bash: pushSh,
+  powershell: pushPs1,
+};
+
+export interface CommitCycleSpec {
+  cycle: number;
+  title: string;
+  schedule: string;
+  scope: string;
+  authorHandle: 'ShimulCoding' | 'dipro20debnath';
+  authorEmail: string;
+}
+
+export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
+  {
+    cycle: 1,
+    title: 'Project setup, Bresenham, DDA & midpoint circle rasterizers',
+    schedule: 'CLO-1 / CLO-2',
+    scope: 'CanvasBuffer, Bresenham & DDA lines, concave star builder, midpoint circle & stepper tracers',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 2,
+    title: '2D symmetry, 3×3 homogeneous transforms & Weiler-Atherton clipping',
+    schedule: 'CLO-2 / CLO-3',
+    scope: 'Cₙ/Dₙ symmetry, Mat3 + inverse, RGB/HSV/CMYK, Cohen-Sutherland, Liang-Barsky, Sutherland-Hodgman & Weiler-Atherton',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 3,
+    title: 'Iterative seed fill, Bengali Alpona motifs & stencil PNG export',
+    schedule: 'CLO-2 / CLO-3',
+    scope: 'Stack-driven span flood fill, 4 Bengali Alpona starter motifs, standalone PNG & Printable Stencil exporter',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 4,
+    title: 'FreeGLUT desktop canvas shell',
+    schedule: 'CLO-1 / CLO-2',
+    scope: 'Interactive OpenGL/FreeGLUT desktop window with undo/redo, live guides & PNG save',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 5,
+    title: 'Studio UI, Concave Star clipping, .alpona.json Save/Load & Timelapse',
+    schedule: 'CLO-1 – CLO-3',
+    scope: 'Studio canvas, Diamond & Concave Star clipping, animated stroke replay, Printable Stencil & .alpona.json I/O',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 6,
+    title: 'Image Lab, 2D FFT, Photo-to-Stencil, Pixel Inspector & Binary Morphology',
+    schedule: 'CLO-6 (Wk 13–14)',
+    scope: 'Point ops, histogram equalization, 3×3 spatial & 2D FFT, Photo-to-Stencil, N₄/N₈/D₄/D₈/Dₑ inspector & Flood-Gap Sealer Closing',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 7,
+    title: '3D Live Courtyard Floor projection, Perspective Anomalies & Z-Buffer',
+    schedule: 'CLO-4 / CLO-5',
+    scope: 'Texture-mapped Live Courtyard Floor + diyas, Week 11 1/2/3-pt & View Confusion (z ≤ -d) presets, Painter’s & Z-Buffer HSR',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 8,
+    title: '16× Zoomed Pixel-Grid Algorithm Stepper & CLO 1–6 pipeline matrix',
+    schedule: 'CLO-1 / CLO-2',
+    scope: 'Interactive 16×16 SVG grid stepping Bresenham, DDA & Midpoint Circle decision parameters + 3×3 homogeneous matrix',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 9,
+    title: 'Parametric Cubic Bézier, de Casteljau hull & Bengali Folk Motif Stamps',
+    schedule: 'Curves / Studio',
+    scope: 'Cubic Bézier C++11 & TS engine, live de Casteljau tangent hull overlay, and Kalka/Shankha/Shapla/Vine symmetric stamps',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 10,
+    title: 'Vector SVG & 4K Ultra-HD (2880×2880) Anti-Aliased PNG Exporters',
+    schedule: '4K / Laser',
+    scope: 'Infinite-resolution <svg> output + 4K UHD (2880×2880) anti-aliased PNG, 300 DPI Greeting Cards & 2×2 SSAA downsampling',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 11,
+    title: 'Virtual Courtyard Floor Try-On (3×3 Homography) & Chalk-Grid A4 Blueprint',
+    schedule: 'Floor & Print',
+    scope: '4-pin 3×3 projective homography warp (1920×1320 HD export) + chalk compass radii, pigment mL & 300 DPI tiled A4 stencils',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 12,
+    title: 'Street-Photo Alpona Unwarper & Polar Symmetry Restorer',
+    schedule: 'CLO-4 / CLO-6',
+    scope: 'Inverse 3×3 homography top-down rectification, polar angular autocorrelation fold detector (4/6/8/12) & D_n fold healing in C++11 & TS',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 13,
+    title: 'Interactive Phong / Gouraud Night-Courtyard Diya Lighting Studio',
+    schedule: 'CLO-4 / CLO-5',
+    scope: 'Sobel 3×3 stroke-relief normal map, draggable earthen diya point lights, Phong vs. Gouraud toggle & 1440px HD night poster export',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 14,
+    title: 'Darkroom Projector & Step-by-Step Ring-by-Ring Floor Tracing Mode',
+    schedule: 'Floor & Trace',
+    scope: '4-stage floor chalking partition, pitch-black darkroom guide renderer, keystone tilt warp (-25°..+25°), fullscreen overlay & 2160px PNG export',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 15,
+    title: 'One-Click 1080p HD Timelapse Video Reel Exporter (.webm)',
+    schedule: 'Media / Studio',
+    scope: 'Parametric 1080×1080 30fps MediaRecorder timelapse reel with smooth de Casteljau curve growth, fill fade-in & C++11 frame exporter parity',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 16,
+    title: 'Saree Paar Border & 90° Anchal Corner Frieze Studio (7 Groups)',
+    schedule: 'Frieze / Fashion',
+    scope: 'All 7 1D Frieze symmetry groups (p1..p2mm), polar-to-Cartesian Alpona ring unwrapper, seamless strip & 90° mitered corner in C++11 & TS',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 17,
+    title: 'Auto-Bridged Laser / Cricut Stencil Island Detector (CSE 402 BFS)',
+    schedule: 'CLO-6 / Stencil',
+    scope: '8-connected BFS floating island detector, multi-source shortest-Dₑ auto-bridger to zero islands, 2-layer zero-bridge split & HD PNG export',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 18,
+    title: 'Photo K-Means Colorway Remapper & Bengali Ritual Motif Stamps',
+    schedule: 'Color / Folk Art',
+    scope: 'Deterministic RGB K-Means (k=5) saree photo palette extractor, 4 festival colorways & Lokkhir Paa, Pyacha Owl, Mangal Ghat, Dhaner Shish stamps',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 19,
+    title: 'Chaikin Stroke Stabilizer & Tapered Rice-Paste Calligraphy Brush',
+    schedule: 'Brush Craft',
+    scope: 'Moving-average + Chaikin corner-cutting stabilizer (levels 0..3) and arc-length tapered Chaler Guro brush in live rasterizer & 4K export',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 20,
+    title: '3D-Printable Pitha Mold & Woodblock Stamp Exporter (.STL & .OBJ)',
+    schedule: '3D Craft / STL',
+    scope: '3×3 Gaussian draft-angle relief heightfield, watertight binary .STL + ASCII .OBJ mesh serializer, back grip handle & Phong turntable preview in C++11 & TS',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 21,
+    title: 'Jamdani Handloom & Nakshi Kantha Weave Graph Generator',
+    schedule: 'Loom / Stitch',
+    scope: 'Warp×weft grid quantization, Nearest / 4×4 Bayer / Floyd-Steinberg dithering, curated Jamdani/Kantha/DMC palettes, thread meter table & CSV/PNG export',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 22,
+    title: 'Procedural Lata-Pata L-System & Phyllotaxis Alpona Composer',
+    schedule: 'Generative',
+    scope: 'Deterministic 32-bit LCG composer combining Golden-Angle Phyllotaxis (137.508°), Polar Rhodonea Lotus rings & L-System Lata-Pata vine borders',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 23,
+    title: 'Natural Media Chaler Guro & Mati Courtyard NPR Renderer',
+    schedule: 'NPR / Media',
+    scope: '3-octave fBm procedural Mati mud, Ekushey asphalt, Tant cotton & Patachitra substrates with Sobel wet rice-paste impasto relief, bristle grain & 1440px PNG',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 24,
+    title: 'Magnetic Snap-to-Axis, Guide Ring Snap & Compass Arc Lock',
+    schedule: 'Canvas Assist',
+    scope: 'Orthogonal Dₙ/Cₙ reflection axis snap, concentric guide ring snap (120/240/330 px), exact axis-ring intersections & constant-radius compass arc lock in C++11 & TS',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 25,
+    title: 'Interactive Stroke Layer Stack & Symmetric Hit-Test Eraser',
+    schedule: 'Layers / Eraser',
+    scope: 'Z-ordered stroke layer list (visibility toggle, reorder up/down, active-pigment recolor, selective delete) plus symmetric hit-test stroke eraser (E) in C++11 & TS',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 26,
+    title: 'Precision Canvas Zoom (1×–4×), Space-Drag Pan & Viewport Camera',
+    schedule: 'Zoom / Pan',
+    scope: 'Anchored zoom-at-point (100%–400%), Spacebar/Hand drag pan, exact screen-to-canvas coordinate inversion & CanvasViewportBar controls in C++11 & TS',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 27,
+    title: 'Tracing Reference Photo Underlay & Alignment Controls',
+    schedule: 'Trace Underlay',
+    scope: 'Uploadable reference photo tracing underlay + built-in Shantiniketan Lotus sketch with opacity/scale/rotation controls, kept strictly excluded from PNG/SVG exports',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 28,
+    title: 'Committed Framebuffer Cache (60fps Software Rasterization)',
+    schedule: 'Performance',
+    scope: 'Caches committed base RGBA pixels in C++11 (frame_cache.cpp) and TypeScript (frameCache.ts) for O(W×H) memcpy preview drag & live Bézier handle edits',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 29,
+    title: 'Automatic localStorage Draft Persistence & Crash Recovery Banner',
+    schedule: 'Reliability',
+    scope: 'Debounced 450ms autosave of active strokes, surface, symmetry & transforms across browser reloads with 1-click Reset Default recovery banner',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 30,
+    title: 'Standalone Zero-OpenGL C++11 CLI Pipeline (AlponaCLI) & Upgraded FreeGLUT Shell',
+    schedule: 'C++11 CLI',
+    scope: 'Headless AlponaCLI exporting PNG, SVG, Binary 3D .STL, Weave CSV, Frieze, Stencil & Natural Media + upgraded main.cpp with snap, dashed axes, zoom & STL/SVG keys',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 31,
+    title: '3-Tab Studio Dock, Stylus Pressure, Post-Placement Bézier Handles & Named Layer Groups',
+    schedule: 'Artist Ergonomics',
+    scope: 'Zero-scroll-wall Draw/Layers/Craft dock, PointerEvent.pressure rice-paste weight, draggable P0–P3 Cubic Bézier handles (V) & Core/Petals/Border/Motifs groups',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 32,
+    title: 'Universal Per-Layer Transform Engine, Layer Lock & Porter-Duff Opacity (C++11 & TS)',
+    schedule: 'Transform / Alpha',
+    scope: 'Bounding-box Move/Scale/Rotate across all 6 primitive types (layer_transform.cpp/.ts), zero-double-darkening Porter-Duff Source-Over per-layer opacity & lock guards',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 33,
+    title: 'Interactive On-Canvas Universal Layer Transform Overlay',
+    schedule: 'Canvas UX',
+    scope: 'Zoom-compensated SVG move bounding box, corner scale handle & rotation handle with 60fps CommittedFrameCache live preview for every stroke type',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 34,
+    title: 'Multi-Touch Tablet Gestures (Pinch-to-Zoom, Two-Finger Pan & Tap Undo)',
+    schedule: 'Touch / Tablet',
+    scope: 'Pure two-pointer pinch ratio, midpoint pan delta & Procreate-style <260ms two-finger tap-to-undo gesture engine integrated into AlponaCanvas',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 35,
+    title: 'IndexedDB Multi-Project Studio Gallery Persistence Engine',
+    schedule: 'Storage / Projects',
+    scope: 'Local IndexedDB project store (alpona-studio-gallery-v1) with automatic localStorage fallback, live canvas thumbnails, save/open/rename/delete CRUD',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 36,
+    title: 'Visual Multi-Project Gallery Modal, 2× Retina HD Preview & Academic Lab Mode',
+    schedule: 'Studio Polish',
+    scope: 'Thumbnail Projects Gallery modal, 1× 720px ↔ 2× 1440px Retina software rasterizer toggle, and clean Artist Mode vs. CSE 401/402 Lab Mode switch',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 37,
+    title: 'Expanded C++11 Automated Verification Suite (38/38 Zero-Warning Assertions)',
+    schedule: 'C++11 Tests',
+    scope: '38 C++11 unit tests verifying Porter-Duff alpha blending, layer lock/opacity, universal layer_transform, CommittedFrameCache, AlponaCLI & CLO 1–6',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 38,
+    title: 'Expanded TypeScript Automated Verification Suite (45/45 Passing Tests)',
+    schedule: 'TS Tests',
+    scope: '45 unit tests covering uniform layer opacity + SVG stroke-opacity, layer lock guards, universal layerTransform, multi-touch pinch/tap, IndexedDB gallery & 2× HD cache',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+  {
+    cycle: 39,
+    title: 'Updated C++11 Source Explorer & Synced CSE 401/402 Documentation (40 Cycles)',
+    schedule: 'Docs & UI',
+    scope: 'Registered layer_transform.cpp in Source Explorer and documented all 40 alternating milestone cycles across root and module READMEs',
+    authorHandle: 'ShimulCoding',
+    authorEmail: 'shimulc17@gmail.com',
+  },
+  {
+    cycle: 40,
+    title: 'Final 40-Cycle Alternating GitHub Push Scripts (Bash & PowerShell)',
+    schedule: 'Release',
+    scope: 'Synchronized 40-cycle alternating Bash & PowerShell GitHub push scripts for ShimulCoding (odd 1..39) and dipro20debnath (even 2..40)',
+    authorHandle: 'dipro20debnath',
+    authorEmail: 'diprodebnath200@gmail.com',
+  },
+];
