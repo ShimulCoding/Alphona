@@ -816,6 +816,28 @@ int main() {
         assert(std::fabs(lockedFlip.p0.x - 400.0) < 1e-6 && std::fabs(lockedFlip.p0.y - 200.0) < 1e-6);
     }
 
-    std::cout << "All 39 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
+    // 40. Grouped Layer Stack Sections & Collapse/Expand Category Parity
+    {
+        std::vector<LayerStrokeOp> stack;
+        LayerStrokeOp a; a.id = 1; a.group = "Core"; a.hidden = false; a.locked = true;
+        LayerStrokeOp b; b.id = 2; b.group = "Petals"; b.hidden = true;
+        LayerStrokeOp c; c.id = 3; c.group = "Core"; c.hidden = false;
+        LayerStrokeOp d; d.id = 4; d.group = "Border"; d.hidden = false;
+        stack.push_back(a);
+        stack.push_back(b);
+        stack.push_back(c);
+        stack.push_back(d);
+
+        std::vector<std::string> collapsed = {"Border", "Petals"};
+        std::vector<LayerGroupSummary> sections = buildLayerGroupSections(stack, collapsed);
+        assert(sections.size() == 3);
+        // Ordered by highest z-index descending: Border (idx 3), Core (idx 2), Petals (idx 1)
+        assert(sections[0].name == "Border" && sections[0].collapsed == true && sections[0].total == 1);
+        assert(sections[1].name == "Core" && sections[1].collapsed == false && sections[1].total == 2 && sections[1].locked == 1);
+        assert(sections[1].layerIds.size() == 2 && sections[1].layerIds[0] == 3 && sections[1].layerIds[1] == 1);
+        assert(sections[2].name == "Petals" && sections[2].collapsed == true && sections[2].visible == 0);
+    }
+
+    std::cout << "All 40 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
     return 0;
 }

@@ -124,18 +124,23 @@ import { parseAlponaProject, serializeAlponaProject } from './projectFile';
 import { DEFAULT_TRANSFORM_2D, hexToRgba, type ClipBounds, type DrawOperation } from './types';
 import { DEFAULT_SNAP_CONFIG, snapPointToSymmetryGuides } from './canvasAssist';
 import {
+  areAllGroupsCollapsed,
   assignOperationGroup,
   buildSampleReferenceSketchDataUrl,
   deleteOperationById,
   describeOperation,
   duplicateOperationById,
   findNearestBezierOp,
+  getLayerGroupAccent,
+  groupOperationsByCategory,
   hitTestOperationAtPoint,
   listOperationGroups,
   moveOperationOrder,
   recolorOperation,
+  setAllGroupsCollapsed,
   setAllOperationsVisibility,
   setOperationOpacity,
+  toggleGroupCollapsed,
   toggleGroupVisibility,
   toggleOperationLock,
   toggleOperationVisibility,
@@ -1740,4 +1745,55 @@ test('46. Horizontal & Vertical Mirror Flip pipeline, frameCache invalidation, S
   const lockedOp: DrawOperation = { ...asymOp, locked: true };
   const lockedMirrored = mirrorOperation(lockedOp, 'horizontal', { x: 50, y: 50 });
   assert.deepEqual(lockedMirrored, lockedOp);
+});
+
+test('47. Grouped layer stack categories, deterministic group accents, and collapse/expand state transitions', () => {
+  const motifOps = ALPONA_MOTIFS[0].buildOperations(720);
+  // Padma Lotus has Core (bottom), Petals (middle), Border (top)
+  const sections = groupOperationsByCategory(motifOps);
+  assert.deepEqual(
+    sections.map((s) => s.name),
+    ['Border', 'Petals', 'Core']
+  );
+
+  // Each group has distinct visual accent colors and accurate counts
+  const accents = new Set(sections.map((s) => s.accentHex));
+  assert.equal(accents.size, 3);
+  assert.equal(getLayerGroupAccent('Core'), '#B91C1C');
+  assert.equal(getLayerGroupAccent('Petals'), '#D97706');
+  assert.equal(getLayerGroupAccent('Border'), '#2563EB');
+  assert.equal(getLayerGroupAccent('Motifs'), '#15803D');
+  assert.equal(getLayerGroupAccent('CustomRing'), getLayerGroupAccent('CustomRing'));
+
+  // Entries inside each section are ordered top-most z-index descending
+  for (const sec of sections) {
+    assert.equal(sec.total, sec.entries.length);
+    for (let i = 1; i < sec.entries.length; i++) {
+      assert.ok(sec.entries[i - 1].index > sec.entries[i].index);
+    }
+  }
+
+  // Filter returns only matching category
+  const petalsOnly = groupOperationsByCategory(motifOps, 'Petals');
+  assert.equal(petalsOnly.length, 1);
+  assert.equal(petalsOnly[0].name, 'Petals');
+
+  // Collapse / expand state transitions
+  const names = sections.map((s) => s.name);
+  let collapsed = new Set<string>();
+  assert.equal(areAllGroupsCollapsed(collapsed, names), false);
+
+  collapsed = toggleGroupCollapsed(collapsed, 'Border');
+  assert.equal(collapsed.has('Border'), true);
+  assert.equal(areAllGroupsCollapsed(collapsed, names), false);
+
+  collapsed = toggleGroupCollapsed(collapsed, 'Border');
+  assert.equal(collapsed.has('Border'), false);
+
+  collapsed = setAllGroupsCollapsed(names, true);
+  assert.equal(areAllGroupsCollapsed(collapsed, names), true);
+
+  collapsed = setAllGroupsCollapsed(names, false);
+  assert.equal(collapsed.size, 0);
+  assert.equal(areAllGroupsCollapsed(collapsed, names), false);
 });
