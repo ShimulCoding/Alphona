@@ -108,6 +108,25 @@ int hitTestLayerAtPoint(
     bool skipLocked = false
 );
 
+struct GroupSelectionResult {
+    std::string groupName;
+    int hitLayerId;
+    std::vector<int> layerIds;
+
+    GroupSelectionResult() : groupName(), hitLayerId(-1), layerIds() {}
+};
+
+/**
+ * Hit-tests the layer stack at `pt` (across all symmetric copies from topmost
+ * z-order downward) and returns all layer IDs sharing the hit operation's group.
+ */
+GroupSelectionResult selectGroupAtPoint(
+    const std::vector<LayerStrokeOp>& stack,
+    Point2D pt,
+    int canvasSize,
+    double thresholdPx = 18.0
+);
+
 } // namespace alpona
 
 #endif // ALPONA_LAYER_STACK_H

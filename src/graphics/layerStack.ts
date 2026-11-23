@@ -277,6 +277,70 @@ export function hitTestOperationAtPoint(
   return null;
 }
 
+export interface GroupSelectionResult {
+  groupName: string;
+  accentHex: string;
+  hitOperationId: string;
+  operationIds: string[];
+}
+
+export function normalizeOperationGroup(op: Pick<DrawOperation, 'group'>): string {
+  return op.group && op.group.trim() ? op.group.trim() : 'Motifs';
+}
+
+/**
+ * Returns all operation IDs in `operations` sharing the given normalized group attribute.
+ */
+export function getOperationIdsInGroup(
+  operations: DrawOperation[],
+  groupName: string
+): string[] {
+  const normalizedTarget = groupName.trim() || 'Motifs';
+  const ids: string[] = [];
+  for (const op of operations) {
+    if (normalizeOperationGroup(op) === normalizedTarget) {
+      ids.push(op.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Hit-tests the canvas at `pt` (including all symmetric copies) and selects all
+ * operations sharing the hit stroke's group attribute. Picks the closest visible
+ * stroke within `thresholdPx`, breaking near-ties (<= 3px) by topmost z-order.
+ */
+export function selectGroupAtPoint(
+  operations: DrawOperation[],
+  pt: Point2D,
+  canvasSize: number,
+  thresholdPx = 18
+): GroupSelectionResult | null {
+  let bestOp: DrawOperation | null = null;
+  let bestDist = thresholdPx;
+
+  for (let i = operations.length - 1; i >= 0; i--) {
+    const op = operations[i];
+    if (op.hidden) continue;
+    const dist = distanceToOperation(op, pt, canvasSize);
+    if (dist <= thresholdPx) {
+      if (bestOp === null || dist + 3 < bestDist) {
+        bestOp = op;
+        bestDist = dist;
+      }
+    }
+  }
+
+  if (!bestOp) return null;
+  const groupName = normalizeOperationGroup(bestOp);
+  return {
+    groupName,
+    accentHex: getLayerGroupAccent(groupName),
+    hitOperationId: bestOp.id,
+    operationIds: getOperationIdsInGroup(operations, groupName),
+  };
+}
+
 /**
  * Generates an offline SVG data URL of a classical Bengali Shantiniketan Lotus
  * chalk sketch so users can test Reference Photo Tracing immediately with one click.

@@ -6,7 +6,8 @@ export type DrawingTool =
   | 'bezier'
   | 'fill'
   | 'eraser'
-  | 'edit';
+  | 'edit'
+  | 'group-select';
 export type LineAlgorithm = 'bresenham' | 'dda';
 export type ClipAlgorithm = 'cohen-sutherland' | 'liang-barsky';
 export type PolygonClipAlgorithm = 'sutherland-hodgman' | 'weiler-atherton';

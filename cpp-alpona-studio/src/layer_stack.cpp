@@ -293,4 +293,44 @@ int hitTestLayerAtPoint(
     return -1;
 }
 
+GroupSelectionResult selectGroupAtPoint(
+    const std::vector<LayerStrokeOp>& stack,
+    Point2D pt,
+    int canvasSize,
+    double thresholdPx
+) {
+    GroupSelectionResult result;
+    int hitIdx = -1;
+    double bestDist = thresholdPx;
+
+    for (int i = static_cast<int>(stack.size()) - 1; i >= 0; --i) {
+        const LayerStrokeOp& op = stack[static_cast<size_t>(i)];
+        if (op.hidden) continue;
+        double dist = distanceToLayerOp(op, pt, canvasSize);
+        if (dist <= thresholdPx) {
+            if (hitIdx < 0 || dist + 3.0 < bestDist) {
+                hitIdx = i;
+                bestDist = dist;
+            }
+        }
+    }
+
+    if (hitIdx < 0) {
+        return result;
+    }
+
+    const LayerStrokeOp& hitOp = stack[static_cast<size_t>(hitIdx)];
+    const std::string targetGroup = hitOp.group.empty() ? "Motifs" : hitOp.group;
+
+    result.groupName = targetGroup;
+    result.hitLayerId = hitOp.id;
+    for (size_t i = 0; i < stack.size(); ++i) {
+        const std::string g = stack[i].group.empty() ? "Motifs" : stack[i].group;
+        if (g == targetGroup) {
+            result.layerIds.push_back(stack[i].id);
+        }
+    }
+    return result;
+}
+
 } // namespace alpona
