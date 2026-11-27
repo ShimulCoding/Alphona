@@ -171,6 +171,7 @@ import {
   createCommittedFrameCache,
   renderWithFrameCache,
 } from './frameCache';
+import { getCanvasContinuityTransition } from './viewContinuity';
 import {
   clearDraftFromStorage,
   loadDraftFromStorage,
@@ -1875,5 +1876,196 @@ test('48. Group Select tool (selectGroupAtPoint) selects all same-group operatio
   assert.equal(miss, null);
 });
 
+test('49. Canvas continuity transition (getCanvasContinuityTransition) computes directional offsets, perspective tilt, and labels between studio, image-lab, and 3d-view', () => {
+  const studioToLab = getCanvasContinuityTransition('studio', 'image-lab');
+  assert.equal(studioToLab.direction, 1);
+  assert.equal(studioToLab.offsetX, 14);
+  assert.equal(studioToLab.initialRotateXDeg, 0);
+  assert.equal(studioToLab.continuityLabel, '2D Alpona Canvas → Image Processing Lab');
+
+  const labTo3D = getCanvasContinuityTransition('image-lab', '3d-view');
+  assert.equal(labTo3D.direction, 1);
+  assert.equal(labTo3D.offsetX, 14);
+  assert.equal(labTo3D.initialRotateXDeg, 5);
+  assert.equal(labTo3D.initialScale, 0.978);
+  assert.equal(labTo3D.continuityLabel, 'Image Processing Lab → 3D Courtyard Projection');
+
+  const threeDToStudio = getCanvasContinuityTransition('3d-view', 'studio');
+  assert.equal(threeDToStudio.direction, -1);
+  assert.equal(threeDToStudio.offsetX, -14);
+  assert.equal(threeDToStudio.initialRotateXDeg, -4);
+  assert.equal(threeDToStudio.continuityLabel, '3D Courtyard Projection → 2D Alpona Canvas');
+
+  const sameView = getCanvasContinuityTransition('studio', 'studio');
+  assert.equal(sameView.direction, 0);
+  assert.equal(sameView.offsetX, 0);
+});
+
+import {
+  buildDesktopGuiButtons,
+  DEFAULT_DESKTOP_GUI_LAYOUT,
+  hitTestDesktopGui,
+  STUDIO_QUICK_START_TEMPLATES,
+  windowToCanvasStagePoint,
+} from './desktopGui';
+
+test('50. Code::Blocks Desktop Studio GUI layout, button hit-testing & Quick-Start Studio templates parity', () => {
+  assert.equal(DEFAULT_DESKTOP_GUI_LAYOUT.windowWidth, 1000);
+  assert.equal(DEFAULT_DESKTOP_GUI_LAYOUT.windowHeight, 796);
+  assert.equal(DEFAULT_DESKTOP_GUI_LAYOUT.canvasX, 270);
+  assert.equal(DEFAULT_DESKTOP_GUI_LAYOUT.canvasY, 48);
+  assert.equal(DEFAULT_DESKTOP_GUI_LAYOUT.canvasSize, 720);
+
+  const buttons = buildDesktopGuiButtons();
+  assert.equal(buttons.length, 37);
+
+  // Hit-test Top Toolbar "Brush" button
+  const hitBrush = hitTestDesktopGui(285, 20);
+  assert.equal(hitBrush.hitGui, true);
+  assert.equal(hitBrush.hitCanvas, false);
+  assert.equal(hitBrush.buttonId, 'ToolFreehand');
+  assert.equal(hitBrush.buttonLabel, 'Brush');
+
+  // Hit-test Top Toolbar "Save PNG" CTA button
+  const hitExport = hitTestDesktopGui(780, 20);
+  assert.equal(hitExport.hitGui, true);
+  assert.equal(hitExport.buttonId, 'ExportPng');
+
+  // Hit-test Left Studio Dock "Boishakhi Sun" quick-start template button
+  const hitTemplate = hitTestDesktopGui(160, 88);
+  assert.equal(hitTemplate.hitGui, true);
+  assert.equal(hitTemplate.buttonId, 'TemplateBoishakhiSun');
+
+  // Hit-test Left Studio Dock "Sindoor" pigment swatch
+  const hitPigment = hitTestDesktopGui(110, 190);
+  assert.equal(hitPigment.hitGui, true);
+  assert.equal(hitPigment.buttonId, 'PigmentCrimson');
+
+  // Hit-test Left Studio Dock "Image Lab NPR" & "3D Courtyard" workspace view buttons
+  const hitNpr = hitTestDesktopGui(160, 568);
+  assert.equal(hitNpr.hitGui, true);
+  assert.equal(hitNpr.buttonId, 'ViewImageLab');
+  const hit3d = hitTestDesktopGui(40, 600);
+  assert.equal(hit3d.hitGui, true);
+  assert.equal(hit3d.buttonId, 'View3D');
+
+  // Hit-test inside the 720x720 Canvas Stage (center at window 630, 408 -> local 360, 360)
+  const hitStage = hitTestDesktopGui(630, 408);
+  assert.equal(hitStage.hitGui, false);
+  assert.equal(hitStage.hitCanvas, true);
+  assert.deepEqual(hitStage.canvasLocalPoint, { x: 360, y: 360 });
+  assert.deepEqual(windowToCanvasStagePoint(630, 408), { x: 360, y: 360 });
+
+  // Quick-Start Studio templates cover 3 curated motifs + 1 blank artisan canvas
+  assert.equal(STUDIO_QUICK_START_TEMPLATES.length, 4);
+  assert.equal(STUDIO_QUICK_START_TEMPLATES[0].id, 'padma-lotus');
+  assert.equal(STUDIO_QUICK_START_TEMPLATES[1].id, 'boishakhi-sun');
+  assert.equal(STUDIO_QUICK_START_TEMPLATES[2].id, 'kalka-rosette');
+  assert.equal(STUDIO_QUICK_START_TEMPLATES[3].id, 'blank-canvas');
+  assert.equal(STUDIO_QUICK_START_TEMPLATES[3].motifId, null);
+});
+
+import {
+  computeSplashProgress,
+  DEFAULT_SPLASH_DURATION_MS,
+  shouldSkipSplashFromSearch,
+} from './splashTransition';
+
+test('51. Branded startup splash transition progress, lotus rotation, fade-out & ?autostart=1 skip detection', () => {
+  assert.equal(DEFAULT_SPLASH_DURATION_MS, 720);
+  assert.equal(shouldSkipSplashFromSearch(''), false);
+  assert.equal(shouldSkipSplashFromSearch('?view=studio'), false);
+  assert.equal(shouldSkipSplashFromSearch('?autostart=1'), true);
+  assert.equal(shouldSkipSplashFromSearch('?skipSplash=1'), true);
+
+  const s0 = computeSplashProgress(0, 720, false);
+  assert.equal(s0.phase, 'emblem-bloom');
+  assert.equal(s0.progressPct, 0);
+  assert.equal(s0.overlayOpacity, 1);
+  assert.equal(s0.isComplete, false);
+  assert.ok(s0.statusLabel.includes('8-Fold Symmetry Framebuffer'));
+
+  const sMid = computeSplashProgress(360, 720, false);
+  assert.equal(sMid.phase, 'stage-calibrate');
+  assert.equal(sMid.progressPct, 50);
+  assert.equal(sMid.lotusRotationDeg, 11.25);
+  assert.equal(sMid.isComplete, false);
+
+  const sFade = computeSplashProgress(648, 720, false);
+  assert.equal(sFade.phase, 'reveal-fade');
+  assert.ok(sFade.overlayOpacity < 1 && sFade.overlayOpacity > 0);
+  assert.equal(sFade.isComplete, false);
+
+  const sDone = computeSplashProgress(720, 720, false);
+  assert.equal(sDone.phase, 'complete');
+  assert.equal(sDone.progressPct, 100);
+  assert.equal(sDone.overlayOpacity, 0);
+  assert.equal(sDone.statusLabel, 'Alpona Studio Ready');
+  assert.equal(sDone.isComplete, true);
+
+  const sSkipped = computeSplashProgress(100, 720, true);
+  assert.equal(sSkipped.isComplete, true);
+  assert.equal(sSkipped.overlayOpacity, 0);
+});
+
+import {
+  computeDraftSyncIndicator,
+  DEFAULT_DRAFT_SYNC_PULSE_MS,
+  DRAFT_SYNC_LABEL,
+} from './draftStorage';
+
+test('52. Draft persistence Synced to Local Storage pulsing indicator state transitions', () => {
+  assert.equal(DRAFT_SYNC_LABEL, 'Synced to Local Storage');
+  assert.equal(DEFAULT_DRAFT_SYNC_PULSE_MS, 2800);
+
+  const initial = computeDraftSyncIndicator(null, 10000);
+  assert.equal(initial.visible, false);
+  assert.equal(initial.isPulsing, false);
+  assert.equal(initial.label, '');
+
+  const syncedJustNow = computeDraftSyncIndicator(10000, 10200, 2800);
+  assert.equal(syncedJustNow.visible, true);
+  assert.equal(syncedJustNow.isPulsing, true);
+  assert.equal(syncedJustNow.label, 'Synced to Local Storage');
+  assert.equal(syncedJustNow.lastSyncedAt, 10000);
+
+  const syncedSettled = computeDraftSyncIndicator(10000, 14000, 2800);
+  assert.equal(syncedSettled.visible, true);
+  assert.equal(syncedSettled.isPulsing, false);
+  assert.equal(syncedSettled.label, 'Synced to Local Storage');
+});
+
+import {
+  ENGINE_DOCUMENTATION_GUIDES,
+  filterDocumentationSteps,
+  getDocumentationGuide,
+} from './documentationGuides';
+
+test('53. PDF-style Engine Documentation Guides (Quick Start & Advanced Techniques) metadata and search filtering', () => {
+  const quickStart = getDocumentationGuide('quick-start');
+  assert.equal(quickStart.documentCode, 'AGRE-MAN-101');
+  assert.equal(quickStart.title, 'Quick Start Reference Manual');
+  assert.equal(quickStart.steps.length, 5);
+  assert.equal(quickStart.steps[0].stepNumber, '01');
+
+  const advanced = getDocumentationGuide('advanced-techniques');
+  assert.equal(advanced.documentCode, 'AGRE-TECH-204');
+  assert.equal(advanced.title, 'Advanced Techniques & Spatial Pipelines');
+  assert.equal(advanced.steps.length, 5);
+  assert.ok(
+    ENGINE_DOCUMENTATION_GUIDES['advanced-techniques'].subtitle.includes('FFT')
+  );
+
+  const allQuick = filterDocumentationSteps('quick-start', '   ');
+  assert.equal(allQuick.length, 5);
+
+  const fftMatches = filterDocumentationSteps('advanced-techniques', 'FFT');
+  assert.equal(fftMatches.length, 1);
+  assert.equal(fftMatches[0].stepNumber, '03');
+
+  const stlMatches = filterDocumentationSteps('advanced-techniques', '.stl');
+  assert.equal(stlMatches.length, 1);
+  assert.equal(stlMatches[0].stepNumber, '05');
+});
 
 
