@@ -23,7 +23,7 @@ The project contains **two programs**. You can run either one, or both:
 | --- | --- | --- | --- |
 | **Part A** | **Web Studio** (the full app, all features) | Node.js | ~3 minutes |
 | **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks with MinGW (FreeGLUT is included) | ~5 minutes |
-| **Part C** | Automated tests (59 TypeScript + 46 C++11) | Node.js, g++ | ~1 minute |
+| **Part C** | Automated tests (61 TypeScript + 47 C++11) | Node.js, g++ | ~1 minute |
 
 ---
 
@@ -189,10 +189,10 @@ Exported files (`alpona_export_N.png`, `alpona_vector_N.svg`, `alpona_pitha_mold
 ## Part C — Automated tests & the command-line tool
 
 ```bash
-# TypeScript engine: 59 tests (run in the project folder, after npm install)
+# TypeScript engine: 61 tests (run in the project folder, after npm install)
 npm test
 
-# C++11 engine: 46 tests, no OpenGL needed (Windows: mingw32-make test)
+# C++11 engine: 47 tests, no OpenGL needed (Windows: mingw32-make test)
 cd cpp-alpona-studio
 make test
 
@@ -206,7 +206,7 @@ make cli
 ./AlponaCLI --help
 ```
 
-Expected: `# pass 59` / `# fail 0` and `All 46 C++11 Alpona Studio v1.4.2 tests passed!`.
+Expected: `# pass 61` / `# fail 0` and `All 47 C++11 Alpona Studio v1.4.2 tests passed!`.
 Other checks: `npm run lint` (TypeScript type check) and `npm run build` (production build into `dist/`).
 
 ---
@@ -231,10 +231,10 @@ Alphona/
 ├── package.json              Web app dependencies and scripts (npm start / test / build)
 ├── index.html, src/          Web studio (React + TypeScript + Vite)
 │   ├── App.tsx, components/  User interface
-│   └── graphics/             Graphics engine + graphics.test.ts (59 tests)
+│   └── graphics/             Graphics engine + graphics.test.ts (61 tests)
 └── cpp-alpona-studio/        C++11 engine
     ├── src/, include/        Engine, main.cpp (FreeGLUT desktop app), cli_pipeline.cpp (AlponaCLI)
-    ├── tests/                test_graphics.cpp (46 tests)
+    ├── tests/                test_graphics.cpp (47 tests)
     ├── third_party/freeglut/ FreeGLUT 3.6.0 for 64-bit MinGW (Windows build, no install needed)
     ├── AlponaStudio.cbp      Code::Blocks project
     └── Makefile              make / make cli / make test

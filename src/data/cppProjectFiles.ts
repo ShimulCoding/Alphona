@@ -312,7 +312,7 @@ export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
     id: 'tests',
     path: 'cpp-alpona-studio/tests/test_graphics.cpp',
     label: 'test_graphics.cpp',
-    role: 'Automated C++11 unit test suite verifying all 46 Core I–VI graphics subsystems (including the pulli kolam composer and team floor planner), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
+    role: 'Automated C++11 unit test suite verifying all 47 Core I–VI graphics subsystems (including the pulli kolam composer and team floor planner), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
     owner: 'Gobindo Debnath Dipro',
     content: testGraphicsCpp,
   },
@@ -887,6 +887,14 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     scope: "Floor & Print gets a Team Planner tab: choose teams, sectors or strips, real floor width and paint coverage; highlight a team section; download a printable team sheet or CSV. AlponaCLI writes the same CSV with --export-team-plan.",
     authorHandle: "ShimulCoding",
     authorEmail: "shimulc17@gmail.com",
+  },
+  {
+    cycle: 70,
+    title: "Implemented incremental frame cache so committing a stroke draws only the new stroke (18x faster at 800 strokes, 75x in 2x HD)",
+    schedule: "milestone",
+    scope: "Profiling an 800-stroke drawing showed every commit re-rasterized all strokes (46% in stampBrush): ~490 ms per stroke at 1x and ~3.1 s in 2x HD. Append-only commits now reuse the cached frame and draw only the new strokes (~27 ms / ~42 ms), pixel-identical to a full render; the desktop app uses the same path.",
+    authorHandle: "dipro20debnath",
+    authorEmail: "diprodebnath200@gmail.com",
   },
 ];
 

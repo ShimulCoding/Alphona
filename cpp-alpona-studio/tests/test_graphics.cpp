@@ -1136,6 +1136,45 @@ int main() {
         assert(csv.find("Total,,3.0000,525") != std::string::npos);
     }
 
-    std::cout << "All 46 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
+    // 47. Committed frame cache appends new strokes without a full rebuild (TS parity: test 60)
+    {
+        const Color bg = {22, 22, 27, 255};
+        std::vector<DrawOperation> history = buildPadmaLotusMotif(200);
+        CommittedFrameCache cache;
+        CanvasBuffer cached(200, 200), direct(200, 200);
+        cache.render(cached, bg, history, 1);
+        assert(cache.fullRebuilds() == 1);
+
+        DrawOperation stroke;
+        stroke.kind = ToolKind::Freehand;
+        stroke.points = {{60.0, 30.0}, {72.0, 44.0}, {64.0, 60.0}};
+        stroke.color = {245, 158, 11, 255};
+        stroke.thickness = 3;
+        stroke.symmetry = SymmetryConfig(8, true);
+        history.push_back(stroke);
+        DrawOperation fill;
+        fill.kind = ToolKind::SeedFill;
+        fill.p0 = {100.0, 100.0};
+        fill.color = {37, 99, 235, 255};
+        fill.symmetricFill = false;
+        fill.symmetry = SymmetryConfig(1, false);
+        history.push_back(fill);
+
+        cache.appendCommitted(cached, bg, history, 2);
+        assert(cache.fullRebuilds() == 1 && cache.incrementalAppends() == 1);
+        direct.clear(bg);
+        for (size_t i = 0; i < history.size(); ++i) executeOperation(direct, history[i]);
+        for (int y = 0; y < 200; ++y)
+            for (int x = 0; x < 200; ++x)
+                assert(cached.getPixel(x, y) == direct.getPixel(x, y));
+
+        // Same revision afterwards is a plain cache hit; another background rebuilds.
+        cache.render(cached, bg, history, 2);
+        assert(cache.fullRebuilds() == 1 && cache.cacheHits() == 1);
+        cache.appendCommitted(cached, Color{124, 45, 18, 255}, history, 3);
+        assert(cache.fullRebuilds() == 2);
+    }
+
+    std::cout << "All 47 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }

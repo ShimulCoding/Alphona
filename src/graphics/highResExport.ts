@@ -26,60 +26,77 @@ export const PRINT_STENCIL_EXPORT_SIZE = 2400; // 300 DPI @ 8"x8" print stencil
  * Pure helper: uniformly scales all vector & seed-fill DrawOperation coordinates
  * and stroke weights from logical canvas space (e.g. 720) to high-res target space.
  */
+// Scaled copies are cached per operation object, so unchanged strokes keep the same
+// scaled object between renders (lets the 2x HD frame cache append only new strokes).
+const scaledOpCache = new WeakMap<DrawOperation, Map<number, DrawOperation>>();
+
 export function scaleOperations(
   operations: DrawOperation[],
   scale: number
 ): DrawOperation[] {
   const s = Math.max(0.25, scale);
-  const sp = (p: Point2D): Point2D => ({ x: p.x * s, y: p.y * s });
-
   return operations.map((op) => {
-    if (op.kind === 'line') {
-      return {
-        ...op,
-        p0: sp(op.p0),
-        p1: sp(op.p1),
-        thickness: Math.max(1, op.thickness * s),
-      };
+    let perScale = scaledOpCache.get(op);
+    if (!perScale) {
+      perScale = new Map();
+      scaledOpCache.set(op, perScale);
     }
-    if (op.kind === 'circle') {
-      return {
-        ...op,
-        center: sp(op.center),
-        radius: op.radius * s,
-        thickness: Math.max(1, op.thickness * s),
-      };
+    let scaled = perScale.get(s);
+    if (!scaled) {
+      scaled = scaleOperation(op, s);
+      perScale.set(s, scaled);
     }
-    if (op.kind === 'polygon') {
-      return {
-        ...op,
-        vertices: op.vertices.map(sp),
-        thickness: Math.max(1, op.thickness * s),
-      };
-    }
-    if (op.kind === 'freehand') {
-      return {
-        ...op,
-        points: op.points.map(sp),
-        thickness: Math.max(1, op.thickness * s),
-      };
-    }
-    if (op.kind === 'bezier') {
-      return {
-        ...op,
-        p0: sp(op.p0),
-        p1: sp(op.p1),
-        p2: sp(op.p2),
-        p3: sp(op.p3),
-        thickness: Math.max(1, op.thickness * s),
-      };
-    }
-    // Seed fill
+    return scaled;
+  });
+}
+
+function scaleOperation(op: DrawOperation, s: number): DrawOperation {
+  const sp = (p: Point2D): Point2D => ({ x: p.x * s, y: p.y * s });
+  if (op.kind === 'line') {
     return {
       ...op,
-      seed: sp(op.seed),
+      p0: sp(op.p0),
+      p1: sp(op.p1),
+      thickness: Math.max(1, op.thickness * s),
     };
-  });
+  }
+  if (op.kind === 'circle') {
+    return {
+      ...op,
+      center: sp(op.center),
+      radius: op.radius * s,
+      thickness: Math.max(1, op.thickness * s),
+    };
+  }
+  if (op.kind === 'polygon') {
+    return {
+      ...op,
+      vertices: op.vertices.map(sp),
+      thickness: Math.max(1, op.thickness * s),
+    };
+  }
+  if (op.kind === 'freehand') {
+    return {
+      ...op,
+      points: op.points.map(sp),
+      thickness: Math.max(1, op.thickness * s),
+    };
+  }
+  if (op.kind === 'bezier') {
+    return {
+      ...op,
+      p0: sp(op.p0),
+      p1: sp(op.p1),
+      p2: sp(op.p2),
+      p3: sp(op.p3),
+      thickness: Math.max(1, op.thickness * s),
+    };
+  }
+  // Seed fill
+  return {
+    ...op,
+    seed: sp(op.seed),
+  };
 }
 
 /**

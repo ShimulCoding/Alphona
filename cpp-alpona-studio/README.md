@@ -8,7 +8,7 @@ share the same engine sources in `src/` and `include/`:
 | --- | --- | --- | --- |
 | **AlponaStudio** — interactive desktop app (1000×796 window, 37 buttons) | `src/main.cpp` | Code::Blocks **F9**, or `make` | Yes (FreeGLUT) |
 | **AlponaCLI** — headless exporter (PNG, SVG, STL, CSV…) | `src/cli_pipeline.cpp` | `make cli` | No |
-| **test_graphics** — 46 automated tests | `tests/test_graphics.cpp` | `make test` | No |
+| **test_graphics** — 47 automated tests | `tests/test_graphics.cpp` | `make test` | No |
 
 On Windows, `make` is called **`mingw32-make`** (it comes with Code::Blocks' MinGW) and the programs end in `.exe`.
 
@@ -53,7 +53,7 @@ Exports are written to the current folder as `alpona_export_N.png`, `alpona_vect
 ## 4. Tests and AlponaCLI
 
 ```bash
-make test        # expected: All 46 C++11 Alpona Studio v1.4.2 tests passed!
+make test        # expected: All 47 C++11 Alpona Studio v1.4.2 tests passed!
 make cli
 ./AlponaCLI --help
 ./AlponaCLI --motif padma --export-png padma.png --export-svg padma.svg \

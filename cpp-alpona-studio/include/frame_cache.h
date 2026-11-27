@@ -28,6 +28,13 @@ public:
         const DrawOperation* previewOp = nullptr
     );
 
+    // Use after operations were only appended to `history` (new stroke, fill, redo): the
+    // cached operations are unchanged, so only history[cachedSize..] is drawn on the cached
+    // base. Falls back to a full render() when the base cannot be reused.
+    void appendCommitted(CanvasBuffer& target, Color bgColor,
+                         const std::vector<DrawOperation>& history, uint64_t historyRevision);
+    int incrementalAppends() const { return incrementalAppends_; }
+
     int cacheHits() const { return cacheHits_; }
     int fullRebuilds() const { return fullRebuilds_; }
     bool isValid() const { return hasBase_; }
@@ -42,6 +49,7 @@ private:
     size_t cachedHistorySize_;
     int cacheHits_;
     int fullRebuilds_;
+    int incrementalAppends_;
 };
 
 } // namespace alpona

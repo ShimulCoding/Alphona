@@ -19,6 +19,7 @@ export interface CommittedFrameCache {
   baseMetrics: PipelineMetrics | null;
   cacheHits: number;
   fullRebuilds: number;
+  incrementalAppends: number;
 }
 
 export function createCommittedFrameCache(): CommittedFrameCache {
@@ -34,6 +35,7 @@ export function createCommittedFrameCache(): CommittedFrameCache {
     baseMetrics: null,
     cacheHits: 0,
     fullRebuilds: 0,
+    incrementalAppends: 0,
   };
 }
 
@@ -102,9 +104,44 @@ export function renderWithFrameCache(
     cache.operationsRef === operations &&
     cache.operationsLength === operations.length;
 
+  // Committing a stroke only appends to the history: when every cached operation is still
+  // the same object at the same index, draw just the new operations on the cached frame
+  // instead of re-rasterizing the whole scene (O(new strokes) instead of O(all strokes)).
+  const cachedOps = cache.operationsRef;
+  let appendOnly =
+    !cacheValid &&
+    cache.basePixels !== null &&
+    cache.baseMetrics !== null &&
+    cachedOps !== null &&
+    cache.width === surface.width &&
+    cache.height === surface.height &&
+    cache.backgroundHex === backgroundHex &&
+    cache.optionsKey === optionsKey &&
+    cache.excludeOpId === excludeOpId &&
+    operations.length > cache.operationsLength &&
+    cachedOps.length === cache.operationsLength;
+  for (let i = 0; appendOnly && i < cache.operationsLength; i++) {
+    if (operations[i] !== cachedOps![i]) appendOnly = false;
+  }
+
   let metrics: PipelineMetrics;
 
-  if (cacheValid && cache.basePixels && cache.baseMetrics) {
+  if (appendOnly && cache.basePixels && cache.baseMetrics) {
+    surface.data.set(cache.basePixels);
+    metrics = { ...cache.baseMetrics };
+    for (let i = cache.operationsLength; i < operations.length; i++) {
+      const op = operations[i];
+      if (op.hidden) continue;
+      metrics.operationsCount++;
+      if (excludeOpId && op.id === excludeOpId) continue;
+      executeOperation(surface, op, metrics, options);
+    }
+    cache.basePixels.set(surface.data);
+    cache.baseMetrics = { ...metrics };
+    cache.operationsRef = operations;
+    cache.operationsLength = operations.length;
+    cache.incrementalAppends++;
+  } else if (cacheValid && cache.basePixels && cache.baseMetrics) {
     surface.data.set(cache.basePixels);
     metrics = { ...cache.baseMetrics };
     cache.cacheHits++;

@@ -136,6 +136,16 @@ void commitHistoryChanged() {
     }
 }
 
+// New stroke / fill / redo only append to gHistory: draw just the new operation on the
+// cached frame instead of re-rasterizing every stroke.
+void commitHistoryAppended() {
+    ++gHistoryRevision;
+    gFrameCache.appendCommitted(gBuffer, gBgColor, gHistory, gHistoryRevision);
+    if (gWorkspaceView != DesktopWorkspaceView::Studio2D) {
+        rebuildWorkspaceViewBuffer();
+    }
+}
+
 void rebuildCanvas(bool includePreview = false) {
     gFrameCache.render(
         gBuffer,
@@ -486,7 +496,7 @@ void executeGuiButtonAction(DesktopButtonId id) {
             if (!gRedoStack.empty()) {
                 gHistory.push_back(gRedoStack.back());
                 gRedoStack.pop_back();
-                commitHistoryChanged();
+                commitHistoryAppended();
                 gStatusToast = "Redid stroke (" + std::to_string(gHistory.size()) + " strokes on canvas).";
             }
             break;
@@ -679,7 +689,7 @@ void mouseCallback(int button, int state, int x, int y) {
             fillOp.symmetry = gSymmetry;
             gHistory.push_back(fillOp);
             gRedoStack.clear();
-            commitHistoryChanged();
+            commitHistoryAppended();
             glutPostRedisplay();
             return;
         }
@@ -698,7 +708,7 @@ void mouseCallback(int button, int state, int x, int y) {
         gIsDrawing = false;
         gHistory.push_back(gActiveOp);
         gRedoStack.clear();
-        commitHistoryChanged();
+        commitHistoryAppended();
         glutPostRedisplay();
     }
 }

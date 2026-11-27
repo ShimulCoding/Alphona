@@ -2345,3 +2345,68 @@ test('59. Team plan CSV matches the C++ AlponaCLI format and team labels sit ins
     }
   }
 });
+
+import { scaleOperations as scaleOpsForHd } from './highResExport';
+
+test('60. Committing a new stroke draws only that stroke on the cached frame (pixel-identical)', () => {
+  const W = 160;
+  const bgHex = '#16161B';
+  const mk = () => ({ width: W, height: W, data: new Uint8ClampedArray(W * W * 4) });
+  const sym = { sectors: 8, reflect: true };
+  const ring: DrawOperation = { id: 'ring', kind: 'circle', center: { x: 80, y: 80 }, radius: 40, color: '#FAF8F2', thickness: 2, symmetry: { sectors: 1, reflect: false } };
+  const fill: DrawOperation = { id: 'fill', kind: 'fill', seed: { x: 80, y: 80 }, color: '#DC2626', symmetric: false, symmetry: { sectors: 1, reflect: false } };
+  const stroke = (id: string, x: number): DrawOperation => ({ id, kind: 'freehand', points: [{ x, y: 30 }, { x: x + 12, y: 44 }, { x: x + 4, y: 60 }], color: '#F59E0B', thickness: 3, symmetry: sym, opacity: 0.6 });
+
+  const cache = createCommittedFrameCache();
+  const cached = mk();
+  const direct = mk();
+  const same = (ops: DrawOperation[]) => {
+    renderScene(direct, bgHex, ops, null, {});
+    assert.deepEqual(cached.data, direct.data);
+  };
+
+  const a = [ring, stroke('s1', 60)];
+  renderWithFrameCache(cache, cached, bgHex, a, null, {});
+  assert.equal(cache.fullRebuilds, 1);
+
+  // Append one stroke: no full rebuild, pixels identical to a full render.
+  const b = [...a, stroke('s2', 90)];
+  renderWithFrameCache(cache, cached, bgHex, b, null, {});
+  assert.equal(cache.fullRebuilds, 1);
+  assert.equal(cache.incrementalAppends, 1);
+  same(b);
+
+  // Append a seed fill (reads the pixels drawn before it) and a hidden stroke at once.
+  const c = [...b, fill, { ...stroke('s3', 100), hidden: true }];
+  renderWithFrameCache(cache, cached, bgHex, c, null, {});
+  assert.equal(cache.fullRebuilds, 1);
+  assert.equal(cache.incrementalAppends, 2);
+  same(c);
+
+  // A preview on top still uses the cached base.
+  const preview = stroke('preview', 40);
+  renderWithFrameCache(cache, cached, bgHex, c, preview, {});
+  assert.equal(cache.fullRebuilds, 1);
+  renderScene(direct, bgHex, c, preview, {});
+  assert.deepEqual(cached.data, direct.data);
+
+  // Editing an earlier stroke or undoing must rebuild everything.
+  const edited = [c[0], { ...c[1], color: '#2563EB' } as DrawOperation, ...c.slice(2)];
+  renderWithFrameCache(cache, cached, bgHex, edited, null, {});
+  assert.equal(cache.fullRebuilds, 2);
+  same(edited);
+  const undone = edited.slice(0, -2);
+  renderWithFrameCache(cache, cached, bgHex, undone, null, {});
+  assert.equal(cache.fullRebuilds, 3);
+  same(undone);
+});
+
+test('61. 2x HD scaling reuses the scaled copy of unchanged strokes', () => {
+  const op: DrawOperation = { id: 'l', kind: 'line', p0: { x: 1, y: 2 }, p1: { x: 3, y: 4 }, color: '#fff', thickness: 2, symmetry: { sectors: 4, reflect: false } };
+  const op2: DrawOperation = { ...op, id: 'l2' };
+  const first = scaleOpsForHd([op], 2);
+  const second = scaleOpsForHd([op, op2], 2);
+  assert.equal(second[0], first[0]);
+  assert.deepEqual(second[1].kind === 'line' && second[1].p1, { x: 6, y: 8 });
+  assert.notEqual(scaleOpsForHd([op], 3)[0], first[0]);
+});
