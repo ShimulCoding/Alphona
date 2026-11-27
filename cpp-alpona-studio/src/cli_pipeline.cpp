@@ -14,6 +14,7 @@
 #include "frieze_border.h"
 #include "generative_composer.h"
 #include "kolam_composer.h"
+#include "team_planner.h"
 #include "motifs.h"
 #include "natural_media.h"
 #include "png_writer.h"
@@ -77,6 +78,10 @@ void printUsage() {
         << "  --export-frieze <file.png>             Export p2mm Frieze Saree Paar border strip PNG\n"
         << "  --export-stencil <file.png>            Export BFS Auto-Bridged Floor Stencil PNG\n"
         << "  --export-natural <file.png>            Export Natural Media Chaler Guro finish PNG\n"
+        << "  --export-team-plan <file.csv>          Team floor plan: area & paint per team and colour\n"
+        << "  --team-plan <1..24>                    Number of teams for --export-team-plan (default: 6)\n"
+        << "  --team-mode <sectors|strips>           Split into pie slices or top-to-bottom strips\n"
+        << "  --floor-cm <40..600>                   Real width of the design on the floor (default: 300)\n"
         << "  --help                                 Show this help message\n";
 }
 
@@ -99,6 +104,8 @@ int main(int argc, char** argv) {
     std::string friezePath;
     std::string stencilPath;
     std::string naturalPath;
+    std::string teamPlanPath;
+    TeamPlanConfig teamCfg;
 
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -153,6 +160,14 @@ int main(int argc, char** argv) {
             friezePath = argv[++i];
         } else if (arg == "--export-stencil" && i + 1 < argc) {
             stencilPath = argv[++i];
+        } else if (arg == "--export-team-plan" && i + 1 < argc) {
+            teamPlanPath = argv[++i];
+        } else if (arg == "--team-plan" && i + 1 < argc) {
+            teamCfg.teams = std::atoi(argv[++i]);
+        } else if (arg == "--team-mode" && i + 1 < argc) {
+            teamCfg.mode = std::string(argv[++i]) == "strips" ? TeamSplitMode::Strips : TeamSplitMode::Sectors;
+        } else if (arg == "--floor-cm" && i + 1 < argc) {
+            teamCfg.diameterCm = std::atof(argv[++i]);
         } else if (arg == "--export-natural" && i + 1 < argc) {
             naturalPath = argv[++i];
         }
@@ -250,6 +265,20 @@ int main(int argc, char** argv) {
         std::cout << "[AlponaCLI] Exported 3D Binary STL (" << stlModeStr << ", "
                   << mesh.triangleCount << " tris, " << bytes.size() << " bytes) -> "
                   << stlPath << "\n";
+    }
+
+    if (!teamPlanPath.empty()) {
+        const TeamPlan plan = computeTeamPlan(surface, bgColor, teamCfg);
+        std::ofstream ofs(teamPlanPath.c_str(), std::ios::binary);
+        if (!ofs.is_open()) {
+            std::cerr << "[AlponaCLI] ERROR: Could not write team plan to " << teamPlanPath << "\n";
+            return 1;
+        }
+        ofs << exportTeamPlanCsv(plan);
+        std::cout << "[AlponaCLI] Team plan: " << plan.teams.size() << " teams ("
+                  << (plan.mode == TeamSplitMode::Strips ? "strips" : "sectors") << ") on a "
+                  << plan.diameterCm << " cm floor, " << plan.totalAreaSqM << " m2 painted, "
+                  << plan.totalPaintMl << " mL paint -> " << teamPlanPath << "\n";
     }
 
     if (!weavePath.empty()) {

@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Ruler,
   Upload,
+  Users,
 } from 'lucide-react';
 import { renderScene, type RenderOptions } from '../graphics/engine';
 import {
@@ -41,11 +42,13 @@ import { FriezeBorderPanel } from './FriezeBorderPanel';
 import { PhotoUnwarperPanel } from './PhotoUnwarperPanel';
 import { ProjectorTracePanel } from './ProjectorTracePanel';
 import { StencilBridgerPanel } from './StencilBridgerPanel';
+import { TeamPlannerPanel } from './TeamPlannerPanel';
 import { WeaveChartPanel } from './WeaveChartPanel';
 
 type FloorPrintMode =
   | 'try-on'
   | 'blueprint'
+  | 'team'
   | 'unwarper'
   | 'projector'
   | 'frieze'
@@ -465,6 +468,19 @@ export function FloorPrintView({
             >
               <Ruler className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Chalk Blueprint &amp; A4</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('team')}
+              aria-pressed={mode === 'team'}
+              className={`inline-flex h-8 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors whitespace-nowrap ${
+                mode === 'team'
+                  ? 'bg-[#B91C1C] text-white'
+                  : 'text-zinc-700 hover:bg-zinc-100'
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Team Planner</span>
             </button>
             <button
               type="button"
@@ -1056,6 +1072,9 @@ export function FloorPrintView({
           </aside>
         </div>
       )}
+
+      {/* Team Floor Planner: split a large alpona into team sections with paint per colour */}
+      {mode === 'team' && <TeamPlannerPanel studioSurface={studioSurface} surface={surface} />}
 
       {/* MODE 3: Street-Photo Alpona Unwarper & Polar Symmetry Restorer */}
       {mode === 'unwarper' && <PhotoUnwarperPanel />}

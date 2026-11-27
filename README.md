@@ -23,7 +23,7 @@ The project contains **two programs**. You can run either one, or both:
 | --- | --- | --- | --- |
 | **Part A** | **Web Studio** (the full app, all features) | Node.js | ~3 minutes |
 | **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks with MinGW (FreeGLUT is included) | ~5 minutes |
-| **Part C** | Automated tests (57 TypeScript + 45 C++11) | Node.js, g++ | ~1 minute |
+| **Part C** | Automated tests (59 TypeScript + 46 C++11) | Node.js, g++ | ~1 minute |
 
 ---
 
@@ -122,8 +122,13 @@ Each step says what to click and what you should see. Steps 1–7 take about 5 m
     the live 4×4 matrix, and Night Diya Phong/Gouraud lighting.
 13. **Floor & Print** — **Virtual Floor Try-On** (drag the 4 corner pins TL/TR/BR/BL to fit a floor
     photo; 3×3 homography; *Upload Photo* to use your own), **Chalk Blueprint & A4** printing at real
-    size, **Saree Border** (frieze groups), **Laser Bridges** (stencil island bridging),
-    **Jamdani Weave** chart, **Photo Unwarper** and **Projector & Trace**.
+    size, **Team Planner**, **Saree Border** (frieze groups), **Laser Bridges** (stencil island
+    bridging), **Jamdani Weave** chart, **Photo Unwarper** and **Projector & Trace**.
+    **Team Planner** splits a large alpona (e.g. Shaheed Minar) between teams: choose the number of
+    teams (1–24), **Sectors** (pie slices, numbered clockwise from the top) or **Strips** (bands from
+    the top), the real width on the floor and the paint coverage. Each team gets its painted area and
+    paint per colour; click a team to highlight its section, and download a printable **Team Sheet
+    PNG** or a **Paint List CSV**.
 
 **Help inside the app**
 
@@ -184,10 +189,10 @@ Exported files (`alpona_export_N.png`, `alpona_vector_N.svg`, `alpona_pitha_mold
 ## Part C — Automated tests & the command-line tool
 
 ```bash
-# TypeScript engine: 57 tests (run in the project folder, after npm install)
+# TypeScript engine: 59 tests (run in the project folder, after npm install)
 npm test
 
-# C++11 engine: 45 tests, no OpenGL needed (Windows: mingw32-make test)
+# C++11 engine: 46 tests, no OpenGL needed (Windows: mingw32-make test)
 cd cpp-alpona-studio
 make test
 
@@ -197,10 +202,11 @@ make cli
             --export-stl padma_pitha.stl --mode pitha --export-weave padma_loom.csv \
             --export-stencil padma_stencil.png
 ./AlponaCLI --kolam 7x7 --kolam-symmetry mirror --export-png kolam.png --export-svg kolam.svg
+./AlponaCLI --motif padma --size 720 --team-plan 6 --floor-cm 300 --export-team-plan teams.csv
 ./AlponaCLI --help
 ```
 
-Expected: `# pass 57` / `# fail 0` and `All 45 C++11 Alpona Studio v1.4.2 tests passed!`.
+Expected: `# pass 59` / `# fail 0` and `All 46 C++11 Alpona Studio v1.4.2 tests passed!`.
 Other checks: `npm run lint` (TypeScript type check) and `npm run build` (production build into `dist/`).
 
 ---
@@ -214,7 +220,7 @@ Other checks: `npm run lint` (TypeScript type check) and `npm run build` (produc
 | **CLO-3** | Line clipping (Cohen–Sutherland, Liang–Barsky), polygon clipping (Sutherland–Hodgman, Weiler–Atherton), hit-test picking | `transforms`, `layer_stack` |
 | **CLO-4** | 3D transformations, parallel vs. perspective projection, 3D relief meshes (STL), frieze groups, 3×3 homography | `projection3d`, `stl_stamp`, `homography`, `photo_unwarper`, `frieze_border` |
 | **CLO-5** | Hidden-surface removal (Painter's, Z-buffer), Phong/Gouraud illumination, NPR shading | `projection3d`, `phong_lighting`, `natural_media` |
-| **CLO-6** | Image fundamentals, histogram, BFS connectivity (N₄, N₈), spatial & FFT filters, morphology | `image_processing`, `photo_unwarper`, `stencil_bridger` |
+| **CLO-6** | Image fundamentals, histogram, BFS connectivity (N₄, N₈), spatial & FFT filters, morphology, pixel classification & region partitioning (team floor plan) | `image_processing`, `photo_unwarper`, `stencil_bridger`, `team_planner` |
 
 ## Project structure
 
@@ -225,10 +231,10 @@ Alphona/
 ├── package.json              Web app dependencies and scripts (npm start / test / build)
 ├── index.html, src/          Web studio (React + TypeScript + Vite)
 │   ├── App.tsx, components/  User interface
-│   └── graphics/             Graphics engine + graphics.test.ts (57 tests)
+│   └── graphics/             Graphics engine + graphics.test.ts (59 tests)
 └── cpp-alpona-studio/        C++11 engine
     ├── src/, include/        Engine, main.cpp (FreeGLUT desktop app), cli_pipeline.cpp (AlponaCLI)
-    ├── tests/                test_graphics.cpp (45 tests)
+    ├── tests/                test_graphics.cpp (46 tests)
     ├── third_party/freeglut/ FreeGLUT 3.6.0 for 64-bit MinGW (Windows build, no install needed)
     ├── AlponaStudio.cbp      Code::Blocks project
     └── Makefile              make / make cli / make test

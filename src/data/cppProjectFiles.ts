@@ -15,6 +15,7 @@ import stlStampCpp from '../../cpp-alpona-studio/src/stl_stamp.cpp?raw';
 import weaveChartCpp from '../../cpp-alpona-studio/src/weave_chart.cpp?raw';
 import generativeComposerCpp from '../../cpp-alpona-studio/src/generative_composer.cpp?raw';
 import kolamComposerCpp from '../../cpp-alpona-studio/src/kolam_composer.cpp?raw';
+import teamPlannerCpp from '../../cpp-alpona-studio/src/team_planner.cpp?raw';
 import naturalMediaCpp from '../../cpp-alpona-studio/src/natural_media.cpp?raw';
 import canvasAssistCpp from '../../cpp-alpona-studio/src/canvas_assist.cpp?raw';
 import layerStackCpp from '../../cpp-alpona-studio/src/layer_stack.cpp?raw';
@@ -188,6 +189,14 @@ export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
     content: kolamComposerCpp,
   },
   {
+    id: 'team_planner',
+    path: 'cpp-alpona-studio/src/team_planner.cpp',
+    label: 'team_planner.cpp',
+    role: 'Team floor planner: sector / strip partition of the rendered alpona, nearest-pigment pixel classification, painted area & paint (mL) per team and colour, CSV export',
+    owner: 'Gobindo Debnath Dipro',
+    content: teamPlannerCpp,
+  },
+  {
     id: 'natural_media',
     path: 'cpp-alpona-studio/src/natural_media.cpp',
     label: 'natural_media.cpp',
@@ -303,7 +312,7 @@ export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
     id: 'tests',
     path: 'cpp-alpona-studio/tests/test_graphics.cpp',
     label: 'test_graphics.cpp',
-    role: 'Automated C++11 unit test suite verifying all 45 Core I–VI graphics subsystems (including the pulli kolam mirror-curve composer), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
+    role: 'Automated C++11 unit test suite verifying all 46 Core I–VI graphics subsystems (including the pulli kolam composer and team floor planner), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
     owner: 'Gobindo Debnath Dipro',
     content: testGraphicsCpp,
   },
@@ -859,7 +868,23 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     cycle: 67,
     title: "link the Windows desktop app fully statically so AlponaStudio.exe needs no MinGW runtime DLLs",
     schedule: "fix(windows)",
-    scope: "The Windows CI found that AlponaStudio.exe built with the posix-thread MinGW of Code::Blocks still needed libwinpthread-1.dll. The FreeGLUT import library is now libfreeglut.a and the Code::Blocks project and Makefile link with -static, so only Windows system DLLs and the bundled libfreeglut.dll are needed.",
+    scope: "The Windows CI found that AlponaStudio.exe built with the posix-thread MinGW of Code::Blocks still needed libwinpthread-1.dll. The FreeGLUT import library is now libfreeglut.a and the Code::Blocks project and Makefile link with -static,…",
+    authorHandle: "ShimulCoding",
+    authorEmail: "shimulc17@gmail.com",
+  },
+  {
+    cycle: 68,
+    title: "Implemented team floor planner engine with sector & strip splits and paint per team (TS + C++11 parity)",
+    schedule: "milestone",
+    scope: "Implemented computeTeamPlan in teamPlanner.ts and team_planner.cpp: splits the rendered alpona into 1-24 team sections (pie-slice sectors clockwise from 12 o'clock, or strips from the top), classifies painted pixels to the nearest…",
+    authorHandle: "dipro20debnath",
+    authorEmail: "diprodebnath200@gmail.com",
+  },
+  {
+    cycle: 69,
+    title: "Added Team Planner tab to Floor & Print with team sheet PNG, paint list CSV and AlponaCLI --export-team-plan",
+    schedule: "milestone",
+    scope: "Floor & Print gets a Team Planner tab: choose teams, sectors or strips, real floor width and paint coverage; highlight a team section; download a printable team sheet or CSV. AlponaCLI writes the same CSV with --export-team-plan.",
     authorHandle: "ShimulCoding",
     authorEmail: "shimulc17@gmail.com",
   },

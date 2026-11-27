@@ -8,7 +8,7 @@ share the same engine sources in `src/` and `include/`:
 | --- | --- | --- | --- |
 | **AlponaStudio** — interactive desktop app (1000×796 window, 37 buttons) | `src/main.cpp` | Code::Blocks **F9**, or `make` | Yes (FreeGLUT) |
 | **AlponaCLI** — headless exporter (PNG, SVG, STL, CSV…) | `src/cli_pipeline.cpp` | `make cli` | No |
-| **test_graphics** — 45 automated tests | `tests/test_graphics.cpp` | `make test` | No |
+| **test_graphics** — 46 automated tests | `tests/test_graphics.cpp` | `make test` | No |
 
 On Windows, `make` is called **`mingw32-make`** (it comes with Code::Blocks' MinGW) and the programs end in `.exe`.
 
@@ -53,7 +53,7 @@ Exports are written to the current folder as `alpona_export_N.png`, `alpona_vect
 ## 4. Tests and AlponaCLI
 
 ```bash
-make test        # expected: All 45 C++11 Alpona Studio v1.4.2 tests passed!
+make test        # expected: All 46 C++11 Alpona Studio v1.4.2 tests passed!
 make cli
 ./AlponaCLI --help
 ./AlponaCLI --motif padma --export-png padma.png --export-svg padma.svg \
@@ -61,6 +61,7 @@ make cli
             --export-stencil padma_stencil.png
 ./AlponaCLI --procedural 42 --sectors 12 --export-png vine.png --export-natural vine_chalk.png
 ./AlponaCLI --kolam 7x7 --kolam-symmetry rotational --export-png kolam.png --export-svg kolam.svg
+./AlponaCLI --motif padma --size 720 --team-plan 6 --team-mode sectors --floor-cm 300 --export-team-plan teams.csv
 ```
 
 | Option | Meaning |
@@ -71,6 +72,7 @@ make cli
 | `--kolam <rows>x<cols>` | Draw a pulli dot-grid kolam (2..12 dots each way) instead of a motif |
 | `--kolam-symmetry <none\|mirror\|rotational>` / `--kolam-density <0..1>` / `--kolam-seed <n>` | Kolam mirror layout; the seed search stops at the first one-stroke design |
 | `--kolam-loops` | Keep the given seed even if the kolam has several loops |
+| `--export-team-plan <file.csv>` with `--team-plan <1..24>`, `--team-mode <sectors\|strips>`, `--floor-cm <40..600>` | Team floor plan: painted area and paint (mL) per team and colour |
 | `--export-png` / `--export-svg` | Raster PNG / vector SVG |
 | `--export-stl <file> --mode <woodblock\|pitha\|coaster>` | 3D-printable relief mold (binary STL) |
 | `--export-weave` | Jamdani / Nakshi Kantha weave chart (CSV) |
@@ -91,3 +93,4 @@ make cli
 | `stencil_bridger`, `stl_stamp`, `weave_chart`, `frieze_border`, `colorway_remap` | Stencils, STL export, weave charts, frieze groups, K-means colours |
 | `generative_composer`, `motifs`, `timelapse_frames`, `desktop_gui` | L-systems & phyllotaxis, motifs, timelapse, desktop GUI layout |
 | `kolam_composer` | Pulli dot-grid kolam: mirror-curve tracing, symmetric mirror placement, one-stroke search |
+| `team_planner` | Team floor plan: sector / strip partition, paint per team and colour, CSV |

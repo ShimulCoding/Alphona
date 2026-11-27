@@ -186,10 +186,10 @@ npm run dev`}</code>
                   <span>3. Verify Automated Unit Tests &amp; Zero-OpenGL Headless C++11 CLI</span>
                 </div>
                 <pre className="mt-2.5 overflow-x-auto rounded-md bg-zinc-900 p-3 font-mono text-[11px] leading-relaxed text-zinc-100">
-                  <code>{`# Run 57/57 TypeScript Graphics Engine Tests
+                  <code>{`# Run 59/59 TypeScript Graphics Engine Tests
 npm test
 
-# Run 45/45 C++11 Unit Tests & Headless AlponaCLI (Zero OpenGL required)
+# Run 46/46 C++11 Unit Tests & Headless AlponaCLI (Zero OpenGL required)
 cd cpp-alpona-studio && make test && make cli
 ./AlponaCLI --motif padma --export-png padma.png --export-svg padma.svg --export-stl padma_pitha.stl --mode pitha`}</code>
                 </pre>
