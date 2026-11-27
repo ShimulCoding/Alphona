@@ -2,6 +2,9 @@
 #include "../include/floodfill.h"
 #include "../include/rasterizer.h"
 #include "../include/transforms.h"
+#include "../include/svg_writer.h"
+#include <iomanip>
+#include <sstream>
 #include <cmath>
 
 namespace alpona {
@@ -294,6 +297,67 @@ std::vector<DrawOperation> buildCourtyardChowkMotif(int canvasSize) {
     ops.push_back(diamond);
 
     return ops;
+}
+
+namespace {
+std::string colorHex(Color c) {
+    std::ostringstream oss;
+    oss << "#" << std::hex << std::uppercase << std::setfill('0')
+        << std::setw(2) << static_cast<int>(c.r)
+        << std::setw(2) << static_cast<int>(c.g)
+        << std::setw(2) << static_cast<int>(c.b);
+    return oss.str();
+}
+} // namespace
+
+std::string buildOperationsSvg(const std::vector<DrawOperation>& ops, int canvasSize, Color bgColor) {
+    SvgWriter svg(canvasSize, canvasSize, colorHex(bgColor));
+    const Point2D center = {canvasSize * 0.5, canvasSize * 0.5};
+    // Seed fills are raster flood fills: replay the scene in order and turn the pixels
+    // each fill paints into a vector path, so the SVG matches the PNG exactly.
+    CanvasBuffer raster(canvasSize, canvasSize);
+    raster.clear(bgColor);
+
+    for (size_t i = 0; i < ops.size(); ++i) {
+        const DrawOperation& op = ops[i];
+        const std::string hex = colorHex(op.color);
+        if (op.kind == ToolKind::SeedFill) {
+            CanvasBuffer before = raster;
+            executeOperation(raster, op);
+            std::vector<uint8_t> mask(static_cast<size_t>(canvasSize) * canvasSize, 0);
+            bool painted = false;
+            for (int y = 0; y < canvasSize; ++y) {
+                for (int x = 0; x < canvasSize; ++x) {
+                    if (before.getPixel(x, y) != raster.getPixel(x, y)) {
+                        mask[static_cast<size_t>(y) * canvasSize + x] = 1;
+                        painted = true;
+                    }
+                }
+            }
+            if (painted) svg.addFillPath(fillMaskToSvgPath(mask, canvasSize, canvasSize), hex);
+            continue;
+        }
+        executeOperation(raster, op);
+        if (op.kind == ToolKind::Line) {
+            auto segs = generateSymmetricSegments(op.p0, op.p1, center, op.symmetry);
+            for (size_t s = 0; s < segs.size(); ++s) {
+                svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
+            }
+        } else if (op.kind == ToolKind::Circle) {
+            auto centers = generateSymmetricPoints(op.p0, center, op.symmetry);
+            for (size_t c = 0; c < centers.size(); ++c) {
+                svg.addCircle(centers[c], op.radius, hex, static_cast<double>(op.thickness));
+            }
+        } else if (op.kind == ToolKind::Freehand && op.points.size() >= 2) {
+            for (size_t k = 1; k < op.points.size(); ++k) {
+                auto segs = generateSymmetricSegments(op.points[k - 1], op.points[k], center, op.symmetry);
+                for (size_t s = 0; s < segs.size(); ++s) {
+                    svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
+                }
+            }
+        }
+    }
+    return svg.str();
 }
 
 } // namespace alpona

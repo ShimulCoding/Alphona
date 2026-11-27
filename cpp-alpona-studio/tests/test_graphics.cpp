@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "../include/bezier.h"
 #include "../include/canvas_assist.h"
 #include "../include/canvas_buffer.h"
@@ -163,12 +164,15 @@ int main() {
         for (const auto& op : buildPadmaLotusMotif(240)) {
             executeOperation(buf, op);
         }
-        const std::string outPath = "/tmp/alpona_test_out.png";
+        // Relative path: works on Windows (no /tmp) as well as Linux and macOS.
+        const std::string outPath = "alpona_test_out.png";
         assert(saveCanvasToPng(buf, outPath));
         std::ifstream f(outPath, std::ios::binary);
         char sig[8] = {};
         f.read(sig, 8);
         assert(static_cast<uint8_t>(sig[0]) == 137 && sig[1] == 'P' && sig[2] == 'N' && sig[3] == 'G');
+        f.close();
+        std::remove(outPath.c_str());
     }
 
     // 10. CORE-3/5: Weiler-Atherton concave polygon clipping splits U-polygon cleanly
@@ -1024,6 +1028,58 @@ int main() {
                (Color{245, 158, 11, 255}));
     }
 
-    std::cout << "All 44 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
+    // 45. SVG export keeps seed-fill regions as merged vector rectangles (TS parity: test 55)
+    {
+        const std::vector<uint8_t> mask = {1, 1, 0, 0,
+                                           1, 1, 0, 1,
+                                           0, 0, 0, 1};
+        assert(fillMaskToSvgPath(mask, 4, 3) == "M0 0h2v2h-2z M3 1h1v2h-1z");
+        assert(fillMaskToSvgPath(std::vector<uint8_t>(6, 0), 3, 2).empty());
+
+        DrawOperation ring;
+        ring.kind = ToolKind::Circle;
+        ring.p0 = {360.0, 360.0};
+        ring.radius = 100.0;
+        ring.color = {250, 248, 242, 255};
+        ring.thickness = 3;
+        ring.symmetry = SymmetryConfig(1, false);
+        DrawOperation fill;
+        fill.kind = ToolKind::SeedFill;
+        fill.p0 = {360.0, 360.0};
+        fill.color = {220, 38, 38, 255};
+        fill.symmetricFill = false;
+        fill.symmetry = SymmetryConfig(1, false);
+
+        const Color bg = {22, 22, 27, 255};
+        CanvasBuffer before(720, 720), after(720, 720);
+        before.clear(bg);
+        after.clear(bg);
+        executeOperation(before, ring);
+        executeOperation(after, ring);
+        executeOperation(after, fill);
+        long painted = 0;
+        for (int y = 0; y < 720; ++y)
+            for (int x = 0; x < 720; ++x)
+                if (before.getPixel(x, y) != after.getPixel(x, y)) ++painted;
+        assert(painted > 25000);
+
+        const std::string svg = buildOperationsSvg(std::vector<DrawOperation>{ring, fill}, 720, bg);
+        const size_t at = svg.find("\" fill=\"#DC2626\"");
+        assert(at != std::string::npos);
+        const size_t start = svg.rfind("d=\"", at) + 3;
+        long area = 0;
+        const std::string d = svg.substr(start, at - start);
+        size_t pos = 0;
+        while ((pos = d.find('M', pos)) != std::string::npos) {
+            int x = 0, y = 0, w = 0, h = 0;
+            std::sscanf(d.c_str() + pos, "M%d %dh%dv%d", &x, &y, &w, &h);
+            area += static_cast<long>(w) * h;
+            ++pos;
+        }
+        assert(area == painted);
+        assert(svg.find("<circle") < svg.find("fill=\"#DC2626\""));
+    }
+
+    std::cout << "All 45 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }

@@ -1,6 +1,8 @@
 #ifndef ALPONA_SVG_WRITER_H
 #define ALPONA_SVG_WRITER_H
 
+#include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -9,6 +11,50 @@
 #include "canvas_buffer.h"
 
 namespace alpona {
+
+// Converts a binary pixel mask (1 = painted) into compact SVG path data: horizontal runs
+// of each row are merged downwards into rectangles ("M x y h w v h h -w z"), ordered
+// top-to-bottom then left-to-right (identical to fillMaskToSvgPath in svgExport.ts).
+inline std::string fillMaskToSvgPath(const std::vector<uint8_t>& mask, int width, int height) {
+    struct Rect { int x, y, w, h; };
+    std::vector<Rect> done;
+    std::vector<Rect> open;
+    for (int y = 0; y < height; ++y) {
+        std::vector<Rect> next;
+        int x = 0;
+        while (x < width) {
+            if (!mask[static_cast<size_t>(y) * width + x]) { ++x; continue; }
+            const int start = x;
+            while (x < width && mask[static_cast<size_t>(y) * width + x]) ++x;
+            const int w = x - start;
+            bool extended = false;
+            for (size_t i = 0; i < open.size(); ++i) {
+                if (open[i].x == start && open[i].w == w) {
+                    Rect r = open[i];
+                    ++r.h;
+                    next.push_back(r);
+                    open.erase(open.begin() + static_cast<long>(i));
+                    extended = true;
+                    break;
+                }
+            }
+            if (!extended) next.push_back(Rect{start, y, w, 1});
+        }
+        done.insert(done.end(), open.begin(), open.end());
+        open.swap(next);
+    }
+    done.insert(done.end(), open.begin(), open.end());
+    std::sort(done.begin(), done.end(), [](const Rect& a, const Rect& b) {
+        return a.y != b.y ? a.y < b.y : a.x < b.x;
+    });
+    std::ostringstream d;
+    for (size_t i = 0; i < done.size(); ++i) {
+        if (i) d << ' ';
+        d << 'M' << done[i].x << ' ' << done[i].y << 'h' << done[i].w << 'v' << done[i].h
+          << "h-" << done[i].w << 'z';
+    }
+    return d.str();
+}
 
 // Zero-dependency C++11 Vector SVG writer for laser cutters, vinyl stencils & high-DPI print.
 class SvgWriter {
@@ -54,6 +100,11 @@ public:
              << "\" fill=\"none\" stroke=\"" << strokeHex
              << "\" stroke-width=\"" << strokeWidth
              << "\" stroke-linecap=\"round\" />\n";
+    }
+
+    void addFillPath(const std::string& pathData, const std::string& fillHex) {
+        out_ << "  <path d=\"" << pathData << "\" fill=\"" << fillHex
+             << "\" shape-rendering=\"crispEdges\" />\n";
     }
 
     std::string str() const {

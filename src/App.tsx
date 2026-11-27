@@ -78,6 +78,7 @@ import {
 } from './graphics/highResExport';
 import { composeProceduralAlpona } from './graphics/generativeComposer';
 import { composeKolam, type KolamSymmetry } from './graphics/kolamComposer';
+import { pushUndoSnapshot } from './graphics/undoHistory';
 import { ALPONA_MOTIFS } from './graphics/motifs';
 import {
   parseAlponaProject,
@@ -203,6 +204,7 @@ export default function App() {
   const [lastDraftSyncedAt, setLastDraftSyncedAt] = useState<number | null>(
     () => initialDraft?.savedAt ?? null
   );
+  const [lastDraftFailedAt, setLastDraftFailedAt] = useState<number | null>(null);
   const [pastSnapshots, setPastSnapshots] = useState<DrawOperation[][]>([]);
   const [futureSnapshots, setFutureSnapshots] = useState<DrawOperation[][]>([]);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -243,6 +245,16 @@ export default function App() {
     []
   );
 
+  // Templates, gallery projects and .alpona files replace the whole drawing; keep the
+  // previous drawing on the Undo stack so a mis-click can be undone.
+  const replaceOperationsUndoably = useCallback((next: DrawOperation[]) => {
+    setOperations((prev) => {
+      setPastSnapshots((past) => pushUndoSnapshot(past, prev));
+      setFutureSnapshots([]);
+      return next;
+    });
+  }, []);
+
   // Debounced (450ms) automatic localStorage draft persistence
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -260,6 +272,8 @@ export default function App() {
       });
       if (didSave) {
         setLastDraftSyncedAt(savedAt);
+      } else {
+        setLastDraftFailedAt(savedAt);
       }
     }, 450);
     return () => window.clearTimeout(timer);
@@ -276,9 +290,11 @@ export default function App() {
     () =>
       computeDraftSyncIndicator(
         lastDraftSyncedAt,
-        lastDraftSyncedAt ?? Date.now()
+        lastDraftSyncedAt ?? Date.now(),
+        undefined,
+        lastDraftFailedAt
       ),
-    [lastDraftSyncedAt]
+    [lastDraftSyncedAt, lastDraftFailedAt]
   );
 
   // Load saved IndexedDB multi-project gallery entries on mount
@@ -538,24 +554,31 @@ export default function App() {
           thumbnailDataUrl = thumb.toDataURL('image/png');
         }
       }
-      await saveGalleryProject(galleryBackend, {
-        name,
-        thumbnailDataUrl,
-        payload: {
-          version: 1,
-          savedAt: Date.now(),
-          surfaceId,
-          symmetry,
-          lineAlgorithm,
-          clippingWindow,
-          transform2D,
-          operations,
-        },
-      });
-      const updated = await listGalleryProjects(galleryBackend);
-      setGalleryProjects(updated);
-      setExportNotice(`Saved "${name}" to local Projects Gallery.`);
-      setTimeout(() => setExportNotice(null), 2600);
+      try {
+        await saveGalleryProject(galleryBackend, {
+          name,
+          thumbnailDataUrl,
+          payload: {
+            version: 1,
+            savedAt: Date.now(),
+            surfaceId,
+            symmetry,
+            lineAlgorithm,
+            clippingWindow,
+            transform2D,
+            operations,
+          },
+        });
+        const updated = await listGalleryProjects(galleryBackend);
+        setGalleryProjects(updated);
+        setExportNotice(`Saved "${name}" to local Projects Gallery.`);
+        setTimeout(() => setExportNotice(null), 2600);
+      } catch {
+        setExportNotice(
+          `Could not save "${name}" — browser storage is full or blocked. Use Save .alpona to keep a file copy.`
+        );
+        setTimeout(() => setExportNotice(null), 6000);
+      }
     },
     [
       galleryBackend,
@@ -577,9 +600,7 @@ export default function App() {
     setLineAlgorithm(p.lineAlgorithm);
     setClippingWindow({ ...p.clippingWindow });
     setTransform2D({ ...p.transform2D });
-    setOperations(p.operations);
-    setPastSnapshots([]);
-    setFutureSnapshots([]);
+    replaceOperationsUndoably(p.operations);
     setSelectedLayerId(null);
     setSelectedGroupName(null);
     setActiveMotifId(null);
@@ -588,22 +609,30 @@ export default function App() {
       `Opened "${project.name}" (${p.operations.length} strokes).`
     );
     setTimeout(() => setExportNotice(null), 2600);
-  }, []);
+  }, [replaceOperationsUndoably]);
 
   const handleRenameGalleryProject = useCallback(
     async (id: string, nextName: string) => {
-      await renameGalleryProject(galleryBackend, id, nextName);
-      const updated = await listGalleryProjects(galleryBackend);
-      setGalleryProjects(updated);
+      try {
+        await renameGalleryProject(galleryBackend, id, nextName);
+        setGalleryProjects(await listGalleryProjects(galleryBackend));
+      } catch {
+        setExportNotice('Could not rename the project — browser storage is full or blocked.');
+        setTimeout(() => setExportNotice(null), 6000);
+      }
     },
     [galleryBackend]
   );
 
   const handleDeleteGalleryProject = useCallback(
     async (id: string) => {
-      await deleteGalleryProject(galleryBackend, id);
-      const updated = await listGalleryProjects(galleryBackend);
-      setGalleryProjects(updated);
+      try {
+        await deleteGalleryProject(galleryBackend, id);
+        setGalleryProjects(await listGalleryProjects(galleryBackend));
+      } catch {
+        setExportNotice('Could not delete the project — browser storage is blocked.');
+        setTimeout(() => setExportNotice(null), 6000);
+      }
     },
     [galleryBackend]
   );
@@ -655,12 +684,10 @@ export default function App() {
     setSymmetry({ ...motif.defaultSymmetry });
     setSurfaceId(motif.defaultSurface);
     setColor(motif.defaultSurface === 'paper' ? '#B91C1C' : '#FAF8F2');
-    setOperations(motif.buildOperations(CANVAS_SIZE));
-    setPastSnapshots([]);
-    setFutureSnapshots([]);
+    replaceOperationsUndoably(motif.buildOperations(CANVAS_SIZE));
     setSelectedLayerId(null);
     setSelectedGroupName(null);
-  }, []);
+  }, [replaceOperationsUndoably]);
 
   const handleApplyQuickStartTemplate = useCallback(
     (template: StudioQuickStartTemplate) => {
@@ -671,23 +698,21 @@ export default function App() {
       setColor(template.defaultColor);
       setSelectedLayerId(null);
       setSelectedGroupName(null);
-      setPastSnapshots([]);
-      setFutureSnapshots([]);
 
       if (template.motifId) {
         const motif = ALPONA_MOTIFS.find((m) => m.id === template.motifId);
         if (motif) {
           setActiveMotifId(motif.id);
-          setOperations(motif.buildOperations(CANVAS_SIZE));
+          replaceOperationsUndoably(motif.buildOperations(CANVAS_SIZE));
         }
       } else {
         setActiveMotifId('blank-canvas');
-        setOperations([]);
+        replaceOperationsUndoably([]);
       }
       setExportNotice(`Loaded "${template.title}" workspace template.`);
       setTimeout(() => setExportNotice(null), 2400);
     },
-    []
+    [replaceOperationsUndoably]
   );
 
   const handleApplyColorway = useCallback(
@@ -796,9 +821,7 @@ export default function App() {
         setLineAlgorithm(parsed.lineAlgorithm);
         setClippingWindow(parsed.clippingWindow);
         setTransform2D(parsed.transform2D);
-        setOperations(parsed.operations);
-        setPastSnapshots([]);
-        setFutureSnapshots([]);
+        replaceOperationsUndoably(parsed.operations);
         setActiveMotifId(null);
         setExportNotice(`Loaded ${parsed.operations.length} strokes from ${file.name}.`);
         setTimeout(() => setExportNotice(null), 2600);
@@ -812,7 +835,7 @@ export default function App() {
       setProjectError('Could not read the selected project file.');
     };
     reader.readAsText(file);
-  }, []);
+  }, [replaceOperationsUndoably]);
 
   const handleExportStencil = useCallback(() => {
     const hiResStencil = renderUltraHdAlponaCanvas(
@@ -1436,18 +1459,27 @@ export default function App() {
               </span>
               {draftSyncIndicator.visible && (
                 <span
-                  key={draftSyncIndicator.lastSyncedAt}
+                  key={`${draftSyncIndicator.status}-${draftSyncIndicator.lastSyncedAt}`}
                   role="status"
                   aria-live="polite"
                   data-testid="footer-draft-sync-indicator"
                   data-sync-pulsing={
                     draftSyncIndicator.isPulsing ? 'true' : 'false'
                   }
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-600"
+                  data-sync-status={draftSyncIndicator.status}
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${
+                    draftSyncIndicator.status === 'failed' ? 'text-[#B91C1C]' : 'text-zinc-600'
+                  }`}
                 >
                   <span aria-hidden="true" className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+                    {draftSyncIndicator.status === 'failed' ? (
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-[#B91C1C]" />
+                    ) : (
+                      <>
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+                      </>
+                    )}
                   </span>
                   <span>{draftSyncIndicator.label}</span>
                 </span>

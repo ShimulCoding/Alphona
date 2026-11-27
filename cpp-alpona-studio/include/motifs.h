@@ -2,6 +2,7 @@
 #define ALPONA_MOTIFS_H
 
 #include "canvas_buffer.h"
+#include <string>
 #include <vector>
 
 namespace alpona {
@@ -26,6 +27,9 @@ struct DrawOperation {
 };
 
 void executeOperation(CanvasBuffer& buffer, const DrawOperation& op);
+
+// Vector SVG of an operation list; seed fills become crisp vector rectangles.
+std::string buildOperationsSvg(const std::vector<DrawOperation>& ops, int canvasSize, Color bgColor);
 
 std::vector<DrawOperation> buildPadmaLotusMotif(int canvasSize);
 std::vector<DrawOperation> buildBoishakhiSunMotif(int canvasSize);

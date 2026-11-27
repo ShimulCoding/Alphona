@@ -1,5 +1,6 @@
 import { sampleCubicBezier } from './bezier';
-import type { RenderOptions } from './engine';
+import { clearSurface, executeOperation, type RenderOptions } from './engine';
+import type { PixelSurface } from './rasterizer';
 import {
   applyMat3,
   buildHomogeneousTransform2D,
@@ -59,8 +60,59 @@ export function generateAlponaSvg(
     );
   }
 
+  // Seed fills are raster flood fills, so the SVG reproduces exactly the pixels they paint on
+  // screen: the scene is replayed in order and each fill's painted pixels become a vector path.
+  const needsRaster =
+    !monochromeCutLines && operations.some((op) => op.kind === 'fill' && !op.hidden);
+  const raster: PixelSurface | null = needsRaster
+    ? { width: canvasSize, height: canvasSize, data: new Uint8ClampedArray(canvasSize * canvasSize * 4) }
+    : null;
+  if (raster) clearSurface(raster, surface.hex);
+  const rasterMetrics = {
+    operationsCount: 0,
+    bresenhamLinePixels: 0,
+    ddaLinePixels: 0,
+    midpointCirclePixels: 0,
+    seedFillPixels: 0,
+    segmentsSubmitted: 0,
+    segmentsClipped: 0,
+    segmentsRejected: 0,
+    polygonsClipped: 0,
+    lastRenderMs: 0,
+  };
+
   for (const op of operations) {
-    if (op.hidden || op.kind === 'fill') continue;
+    if (op.hidden) continue;
+    if (op.kind === 'fill') {
+      if (!raster) continue;
+      const before = new Uint8ClampedArray(raster.data);
+      executeOperation(raster, op, rasterMetrics, options);
+      const mask = new Uint8Array(canvasSize * canvasSize);
+      let painted = 0;
+      for (let i = 0, p = 0; i < before.length; i += 4, p++) {
+        if (
+          before[i] !== raster.data[i] ||
+          before[i + 1] !== raster.data[i + 1] ||
+          before[i + 2] !== raster.data[i + 2]
+        ) {
+          mask[p] = 1;
+          painted++;
+        }
+      }
+      if (painted > 0) {
+        const fillOpacity =
+          typeof op.opacity === 'number' && op.opacity < 0.995
+            ? ` fill-opacity="${fmt(Math.max(0.1, Math.min(1, op.opacity)))}"`
+            : '';
+        elements.push(
+          `  <path d="${fillMaskToSvgPath(mask, canvasSize, canvasSize)}" fill="${escapeXml(
+            op.color
+          )}"${fillOpacity} shape-rendering="crispEdges" />`
+        );
+      }
+      continue;
+    }
+    if (raster) executeOperation(raster, op, rasterMetrics, options);
     const strokeColor = monochromeCutLines ? '#111111' : op.color;
     const strokeW = Math.max(1, op.thickness);
     const opacityAttr =
@@ -229,4 +281,41 @@ export function downloadAlponaSvg(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Converts a binary pixel mask (1 = painted) into compact SVG path data: horizontal
+ * runs of each row are merged downwards into rectangles ("M x y h w v h h -w z").
+ * Rectangles are ordered top-to-bottom, then left-to-right.
+ */
+export function fillMaskToSvgPath(mask: Uint8Array, width: number, height: number): string {
+  interface Rect { x: number; y: number; w: number; h: number }
+  const done: Rect[] = [];
+  let open = new Map<string, Rect>();
+  for (let y = 0; y < height; y++) {
+    const next = new Map<string, Rect>();
+    let x = 0;
+    while (x < width) {
+      if (!mask[y * width + x]) {
+        x++;
+        continue;
+      }
+      const start = x;
+      while (x < width && mask[y * width + x]) x++;
+      const key = `${start},${x - start}`;
+      const prev = open.get(key);
+      if (prev) {
+        prev.h++;
+        open.delete(key);
+        next.set(key, prev);
+      } else {
+        next.set(key, { x: start, y, w: x - start, h: 1 });
+      }
+    }
+    for (const r of open.values()) done.push(r);
+    open = next;
+  }
+  for (const r of open.values()) done.push(r);
+  done.sort((a, b) => a.y - b.y || a.x - b.x);
+  return done.map((r) => `M${r.x} ${r.y}h${r.w}v${r.h}h-${r.w}z`).join(' ');
 }

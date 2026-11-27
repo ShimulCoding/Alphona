@@ -74,12 +74,10 @@ function readFallbackList(): SavedAlponaProject[] {
   }
 }
 
+// Throws when the browser refuses to store the list (quota full, storage blocked), so
+// the caller can tell the user that the project was NOT saved.
 function writeFallbackList(list: SavedAlponaProject[]): void {
-  try {
-    window.localStorage.setItem(FALLBACK_LS_KEY, JSON.stringify(list));
-  } catch {
-    // Ignore storage quota errors
-  }
+  window.localStorage.setItem(FALLBACK_LS_KEY, JSON.stringify(list));
 }
 
 /**

@@ -23,7 +23,7 @@ The project contains **two programs**. You can run either one, or both:
 | --- | --- | --- | --- |
 | **Part A** | **Web Studio** (the full app, all features) | Node.js | ~3 minutes |
 | **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks (MinGW) + FreeGLUT | ~10 minutes |
-| **Part C** | Automated tests (54 TypeScript + 44 C++11) | Node.js, g++ | ~1 minute |
+| **Part C** | Automated tests (57 TypeScript + 45 C++11) | Node.js, g++ | ~1 minute |
 
 ---
 
@@ -83,7 +83,8 @@ Each step says what to click and what you should see. Steps 1–7 take about 5 m
 3. **Other tools.** Line (`L`), Circle (`O`), Polygon (`P`), Bézier (`C`), Transform (`V`),
    Seed Fill (`B` — click inside a closed shape to fill it), Stroke Eraser (`E`), Group Select (`A`).
    Pick colours from *Alpona Pigments* and the floor colour from *Surface*.
-4. **Undo / Redo / Clear** with the buttons under the canvas or `Ctrl+Z` / `Ctrl+Y`.
+4. **Undo / Redo / Clear** with the buttons under the canvas or `Ctrl+Z` / `Ctrl+Y`. Picking a template
+   or opening a project can also be undone, so a mis-click never loses a drawing.
 5. **Layers tab** (right panel): every stroke is a layer — hide/show, lock, delete, change opacity,
    bring forward / send backward, and colour-coded groups.
    **Craft tab:** procedural *Compose Alpona* (L-system vines, phyllotaxis, rhodonea petals),
@@ -100,14 +101,16 @@ Each step says what to click and what you should see. Steps 1–7 take about 5 m
 
 **Save, open and export** (buttons under the canvas and top-right)
 
-8. **Export SVG** → downloads `alpona-studio-vector.svg`. **Export 4K PNG** (top right) →
+8. **Export SVG** → downloads `alpona-studio-vector.svg` (strokes as vector lines, Seed Fill areas as
+   filled vector shapes, so it matches the screen). **Export 4K PNG** (top right) →
    `alpona-studio-4k-uhd.png`. **Print Stencil** → `alpona-printable-stencil-300dpi.png`.
    **Replay Timelapse** replays how the alpona was drawn; **Export Reel** records it as a 1080×1080
    `.webm` video. **Greeting Card** adds a festive frame and caption to the design (included in exports).
 9. **Save .alpona** → downloads `alpona-studio-project.alpona.json`. Click **Clear**, then
    **Load .alpona** and choose that file → your drawing comes back.
 10. **Projects** (top bar): save several designs in the browser with thumbnails; open, rename or delete them.
-   The studio also auto-saves — reload the page and your work is still there.
+   The studio also auto-saves — reload the page and your work is still there. The footer shows
+   *Synced to Local Storage*, or a red *Not saved* warning if the browser blocks storage.
 
 **The other three views** (top navigation)
 
@@ -188,10 +191,10 @@ Exported files (`alpona_export_N.png`, `alpona_vector_N.svg`, `alpona_pitha_mold
 ## Part C — Automated tests & the command-line tool
 
 ```bash
-# TypeScript engine: 54 tests (run in the project folder, after npm install)
+# TypeScript engine: 57 tests (run in the project folder, after npm install)
 npm test
 
-# C++11 engine: 44 tests, no OpenGL needed (Windows: mingw32-make test)
+# C++11 engine: 45 tests, no OpenGL needed (Windows: mingw32-make test)
 cd cpp-alpona-studio
 make test
 
@@ -204,7 +207,7 @@ make cli
 ./AlponaCLI --help
 ```
 
-Expected: `# pass 54` / `# fail 0` and `All 44 C++11 Alpona Studio v1.4.2 tests passed!`.
+Expected: `# pass 57` / `# fail 0` and `All 45 C++11 Alpona Studio v1.4.2 tests passed!`.
 Other checks: `npm run lint` (TypeScript type check) and `npm run build` (production build into `dist/`).
 
 ---
@@ -229,10 +232,10 @@ Alphona/
 ├── package.json              Web app dependencies and scripts (npm start / test / build)
 ├── index.html, src/          Web studio (React + TypeScript + Vite)
 │   ├── App.tsx, components/  User interface
-│   └── graphics/             Graphics engine + graphics.test.ts (54 tests)
+│   └── graphics/             Graphics engine + graphics.test.ts (57 tests)
 └── cpp-alpona-studio/        C++11 engine
     ├── src/, include/        Engine, main.cpp (FreeGLUT desktop app), cli_pipeline.cpp (AlponaCLI)
-    ├── tests/                test_graphics.cpp (44 tests)
+    ├── tests/                test_graphics.cpp (45 tests)
     ├── AlponaStudio.cbp      Code::Blocks project
     └── Makefile              make / make cli / make test
 ```

@@ -104,15 +104,6 @@ bool colorsEqual(Color a, Color b) {
     return a.r == b.r && a.g == b.g && a.b == b.b;
 }
 
-std::string colorToHex(Color c) {
-    std::ostringstream oss;
-    oss << "#" << std::hex << std::uppercase << std::setfill('0')
-        << std::setw(2) << static_cast<int>(c.r)
-        << std::setw(2) << static_cast<int>(c.g)
-        << std::setw(2) << static_cast<int>(c.b);
-    return oss.str();
-}
-
 void rebuildWorkspaceViewBuffer() {
     if (gWorkspaceView == DesktopWorkspaceView::ImageLabNpr) {
         NaturalMediaOptions opts;
@@ -439,31 +430,10 @@ Point2D mapWindowMouseToCanvasLogical(int winX, int winY) {
 
 void exportSvgSnapshot() {
     std::string filename = "alpona_vector_" + std::to_string(gExportCounter++) + ".svg";
-    SvgWriter svg(kCanvasSize, kCanvasSize, colorToHex(gBgColor));
-    const Point2D center = {kCanvasSize * 0.5, kCanvasSize * 0.5};
-    for (size_t i = 0; i < gHistory.size(); ++i) {
-        const DrawOperation& op = gHistory[i];
-        const std::string hex = colorToHex(op.color);
-        if (op.kind == ToolKind::Line) {
-            auto segs = generateSymmetricSegments(op.p0, op.p1, center, op.symmetry);
-            for (size_t s = 0; s < segs.size(); ++s) {
-                svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
-            }
-        } else if (op.kind == ToolKind::Circle) {
-            auto centers = generateSymmetricPoints(op.p0, center, op.symmetry);
-            for (size_t c = 0; c < centers.size(); ++c) {
-                svg.addCircle(centers[c], op.radius, hex, static_cast<double>(op.thickness));
-            }
-        } else if (op.kind == ToolKind::Freehand && op.points.size() >= 2) {
-            for (size_t k = 1; k < op.points.size(); ++k) {
-                auto segs = generateSymmetricSegments(op.points[k - 1], op.points[k], center, op.symmetry);
-                for (size_t s = 0; s < segs.size(); ++s) {
-                    svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
-                }
-            }
-        }
-    }
-    if (svg.saveToFile(filename)) {
+    // Shared with AlponaCLI: seed fills are exported as crisp vector regions too.
+    const std::string svg = buildOperationsSvg(gHistory, kCanvasSize, gBgColor);
+    std::ofstream ofs(filename.c_str(), std::ios::binary);
+    if (ofs.is_open() && (ofs << svg)) {
         gStatusToast = "Saved Vector SVG artwork -> " + filename;
         std::cout << "[Alpona Studio Pro] " << gStatusToast << std::endl;
     }

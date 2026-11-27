@@ -38,48 +38,15 @@ using namespace alpona;
 
 namespace {
 
-std::string colorToHex(Color c) {
-    std::ostringstream oss;
-    oss << "#" << std::hex << std::uppercase << std::setfill('0')
-        << std::setw(2) << static_cast<int>(c.r)
-        << std::setw(2) << static_cast<int>(c.g)
-        << std::setw(2) << static_cast<int>(c.b);
-    return oss.str();
-}
-
 void writeOpsToSvg(
     const std::vector<DrawOperation>& ops,
     int canvasSize,
     Color bgColor,
     const std::string& path
 ) {
-    SvgWriter svg(canvasSize, canvasSize, colorToHex(bgColor));
-    const Point2D center = {canvasSize * 0.5, canvasSize * 0.5};
-
-    for (size_t i = 0; i < ops.size(); ++i) {
-        const DrawOperation& op = ops[i];
-        const std::string hex = colorToHex(op.color);
-        if (op.kind == ToolKind::Line) {
-            auto segs = generateSymmetricSegments(op.p0, op.p1, center, op.symmetry);
-            for (size_t s = 0; s < segs.size(); ++s) {
-                svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
-            }
-        } else if (op.kind == ToolKind::Circle) {
-            auto centers = generateSymmetricPoints(op.p0, center, op.symmetry);
-            for (size_t c = 0; c < centers.size(); ++c) {
-                svg.addCircle(centers[c], op.radius, hex, static_cast<double>(op.thickness));
-            }
-        } else if (op.kind == ToolKind::Freehand && op.points.size() >= 2) {
-            for (size_t k = 1; k < op.points.size(); ++k) {
-                auto segs = generateSymmetricSegments(op.points[k - 1], op.points[k], center, op.symmetry);
-                for (size_t s = 0; s < segs.size(); ++s) {
-                    svg.addLine(segs[s].first, segs[s].second, hex, static_cast<double>(op.thickness));
-                }
-            }
-        }
-    }
-
-    if (svg.saveToFile(path)) {
+    const std::string svg = buildOperationsSvg(ops, canvasSize, bgColor);
+    std::ofstream ofs(path.c_str(), std::ios::binary);
+    if (ofs.is_open() && (ofs << svg)) {
         std::cout << "[AlponaCLI] Exported Vector SVG -> " << path << "\n";
     } else {
         std::cerr << "[AlponaCLI] ERROR: Could not write SVG to " << path << "\n";

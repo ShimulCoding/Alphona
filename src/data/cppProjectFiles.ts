@@ -303,7 +303,7 @@ export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
     id: 'tests',
     path: 'cpp-alpona-studio/tests/test_graphics.cpp',
     label: 'test_graphics.cpp',
-    role: 'Automated C++11 unit test suite verifying all 44 Core I–VI graphics subsystems (including the pulli kolam mirror-curve composer), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
+    role: 'Automated C++11 unit test suite verifying all 45 Core I–VI graphics subsystems (including the pulli kolam mirror-curve composer), CommittedFrameCache, Stylus Pressure, Named Layer Groups, Bézier Handle Editing, Pro Canvas Assist & Maker exporters',
     owner: 'Gobindo Debnath Dipro',
     content: testGraphicsCpp,
   },
@@ -838,6 +838,14 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     scope: "GitHub Actions runs RUN_STUDIO_WEB.bat, the FreeGLUT setup, RUN_CPP_DESKTOP.bat, both test suites and the CLI on a fresh Windows machine (and on Linux) for every push; removes push_to_github.sh/.ps1 and their Source Explorer panel.",
     authorHandle: "dipro20debnath",
     authorEmail: "diprodebnath200@gmail.com",
+  },
+  {
+    cycle: 65,
+    title: "SVG exports keep seed fills, undoable template & project loads, visible save failures & Windows-safe C++ tests",
+    schedule: "fix(reliability)",
+    scope: "SVG export (web, CLI and desktop) turns each seed fill into crisp vector rectangles; templates, gallery projects and .alpona files can be undone; failed autosave and gallery saves are reported; gallery delete asks first; C++ test 9 no longer writes to /tmp, so mingw32-make test passes on Windows.",
+    authorHandle: "ShimulCoding",
+    authorEmail: "shimulc17@gmail.com",
   },
 ];
 

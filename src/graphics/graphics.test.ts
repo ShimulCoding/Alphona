@@ -2160,3 +2160,107 @@ test('54. Kolam / Pulli dot-grid mirror-curve composer: Lunda invariants, symmet
     }
   }
 });
+
+import { fillMaskToSvgPath } from './svgExport';
+
+test('55. SVG export keeps seed-fill regions as merged vector rectangles', () => {
+  // Pure mask -> path conversion: horizontal runs merged vertically into rectangles.
+  const mask = new Uint8Array([
+    1, 1, 0, 0,
+    1, 1, 0, 1,
+    0, 0, 0, 1,
+  ]);
+  assert.equal(fillMaskToSvgPath(mask, 4, 3), 'M0 0h2v2h-2z M3 1h1v2h-1z');
+  assert.equal(fillMaskToSvgPath(new Uint8Array(6), 3, 2), '');
+
+  const noSym = { sectors: 1, reflect: false };
+  const ring: DrawOperation = {
+    id: 'ring',
+    kind: 'circle',
+    center: { x: 360, y: 360 },
+    radius: 100,
+    color: '#FAF8F2',
+    thickness: 3,
+    symmetry: noSym,
+  };
+  const fill: DrawOperation = {
+    id: 'fill',
+    kind: 'fill',
+    seed: { x: 360, y: 360 },
+    color: '#DC2626',
+    symmetric: false,
+    symmetry: noSym,
+  };
+
+  // Pixels the seed fill paints on screen = area the SVG must cover.
+  const surf = () => ({ width: 720, height: 720, data: new Uint8ClampedArray(720 * 720 * 4) });
+  const before = surf();
+  const after = surf();
+  renderScene(before, CANVAS_SURFACES[0].hex, [ring]);
+  renderScene(after, CANVAS_SURFACES[0].hex, [ring, fill]);
+  let painted = 0;
+  for (let i = 0; i < before.data.length; i += 4) {
+    if (before.data[i] !== after.data[i] || before.data[i + 1] !== after.data[i + 1]) painted++;
+  }
+  assert.ok(painted > 25000);
+
+  const svg = generateAlponaSvg([ring, fill], CANVAS_SURFACES[0], 720);
+  const match = svg.match(/<path d="([^"]+)" fill="#DC2626"/);
+  assert.ok(match, 'fill region missing from SVG');
+  let area = 0;
+  for (const r of match![1].matchAll(/M(\d+) (\d+)h(\d+)v(\d+)/g)) {
+    area += Number(r[3]) * Number(r[4]);
+  }
+  assert.equal(area, painted);
+  // Fill is drawn after the ring outline it sits inside.
+  assert.ok(svg.indexOf('<circle') < svg.indexOf('fill="#DC2626"'));
+
+  assert.ok(!generateAlponaSvg([ring, { ...fill, hidden: true }], CANVAS_SURFACES[0], 720).includes('#DC2626'));
+  assert.ok(
+    !generateAlponaSvg([ring, fill], CANVAS_SURFACES[0], 720, {}, { monochromeCutLines: true }).includes('#DC2626')
+  );
+  assert.ok(generateAlponaSvg([ring, { ...fill, opacity: 0.5 }], CANVAS_SURFACES[0], 720).includes('fill-opacity="0.5"'));
+});
+
+import { pushUndoSnapshot } from './undoHistory';
+
+test('56. Loading a template or project keeps the previous drawing in Undo history', () => {
+  const a: DrawOperation[] = [
+    { id: 'a', kind: 'line', p0: { x: 0, y: 0 }, p1: { x: 5, y: 5 }, color: '#fff', thickness: 2, symmetry: { sectors: 8, reflect: true } },
+  ];
+  const past = pushUndoSnapshot([], a);
+  assert.equal(past.length, 1);
+  assert.equal(past[0], a);
+
+  // An empty canvas has nothing to lose, so no snapshot is added.
+  assert.equal(pushUndoSnapshot(past, []), past);
+
+  // History is capped (oldest dropped) like normal stroke undo.
+  let long: DrawOperation[][] = [];
+  for (let i = 0; i < 45; i++) long = pushUndoSnapshot(long, a);
+  assert.equal(long.length, 40);
+  assert.equal(pushUndoSnapshot(long, a, 5).length, 5);
+});
+
+import { DRAFT_SYNC_FAILED_LABEL } from './draftStorage';
+
+test('57. Autosave indicator reports a failed save instead of a stale "Synced"', () => {
+  assert.equal(DRAFT_SYNC_FAILED_LABEL, 'Not saved — browser storage is full or blocked');
+
+  const ok = computeDraftSyncIndicator(10000, 10200, 2800, null);
+  assert.equal(ok.status, 'synced');
+
+  const failedAfterSync = computeDraftSyncIndicator(10000, 12000, 2800, 12000);
+  assert.equal(failedAfterSync.visible, true);
+  assert.equal(failedAfterSync.status, 'failed');
+  assert.equal(failedAfterSync.isPulsing, false);
+  assert.equal(failedAfterSync.label, DRAFT_SYNC_FAILED_LABEL);
+
+  const failedNeverSynced = computeDraftSyncIndicator(null, 500, 2800, 400);
+  assert.equal(failedNeverSynced.visible, true);
+  assert.equal(failedNeverSynced.status, 'failed');
+
+  const recovered = computeDraftSyncIndicator(13000, 13100, 2800, 12000);
+  assert.equal(recovered.status, 'synced');
+  assert.equal(recovered.label, 'Synced to Local Storage');
+});

@@ -210,7 +210,15 @@ export function ProjectGalleryModal({
                         </button>
                         <button
                           type="button"
-                          onClick={() => onDeleteProject(proj.id)}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Delete "${proj.name}" from the Projects Gallery? This cannot be undone.`
+                              )
+                            ) {
+                              onDeleteProject(proj.id);
+                            }
+                          }}
                           data-testid={`gallery-delete-${proj.id}`}
                           aria-label={`Delete ${proj.name}`}
                           title="Delete saved project"

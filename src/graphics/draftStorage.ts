@@ -160,9 +160,11 @@ export function clearDraftFromStorage(
 }
 
 export const DRAFT_SYNC_LABEL = 'Synced to Local Storage';
+export const DRAFT_SYNC_FAILED_LABEL = 'Not saved — browser storage is full or blocked';
 export const DEFAULT_DRAFT_SYNC_PULSE_MS = 2800;
 
 export interface DraftSyncIndicatorState {
+  status: 'idle' | 'synced' | 'failed';
   visible: boolean;
   isPulsing: boolean;
   label: string;
@@ -172,14 +174,26 @@ export interface DraftSyncIndicatorState {
 export function computeDraftSyncIndicator(
   lastSyncedAt: number | null,
   nowMs: number,
-  pulseWindowMs: number = DEFAULT_DRAFT_SYNC_PULSE_MS
+  pulseWindowMs: number = DEFAULT_DRAFT_SYNC_PULSE_MS,
+  lastFailedAt: number | null = null
 ): DraftSyncIndicatorState {
+  const hasFailure = lastFailedAt !== null && Number.isFinite(lastFailedAt) && lastFailedAt > 0;
+  if (hasFailure && (lastSyncedAt === null || lastFailedAt >= lastSyncedAt)) {
+    return {
+      status: 'failed',
+      visible: true,
+      isPulsing: false,
+      label: DRAFT_SYNC_FAILED_LABEL,
+      lastSyncedAt,
+    };
+  }
   if (
     lastSyncedAt === null ||
     !Number.isFinite(lastSyncedAt) ||
     lastSyncedAt <= 0
   ) {
     return {
+      status: 'idle',
       visible: false,
       isPulsing: false,
       label: '',
@@ -189,6 +203,7 @@ export function computeDraftSyncIndicator(
   const elapsed = Math.max(0, nowMs - lastSyncedAt);
   const windowMs = Math.max(400, pulseWindowMs);
   return {
+    status: 'synced',
     visible: true,
     isPulsing: elapsed <= windowMs,
     label: DRAFT_SYNC_LABEL,
