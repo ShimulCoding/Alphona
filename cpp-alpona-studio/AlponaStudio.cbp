@@ -15,14 +15,21 @@
 					<Add option="-O2" />
 					<Add option="-std=c++11" />
 					<Add directory="include" />
+					<Add directory="third_party/freeglut/include" />
 				</Compiler>
 				<Linker>
+					<Add option="-static-libgcc" />
+					<Add option="-static-libstdc++" />
+					<Add directory="third_party/freeglut/lib/x64" />
 					<Add library="freeglut" />
 					<Add library="opengl32" />
 					<Add library="glu32" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='cmd /c copy /Y &quot;third_party\freeglut\bin\x64\libfreeglut.dll&quot; &quot;bin\Release&quot;' />
+				</ExtraCommands>
 			</Target>
 		</Build>
 		<Unit filename="include/bezier.h" />

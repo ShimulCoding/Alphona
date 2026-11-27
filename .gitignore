@@ -13,6 +13,7 @@ cpp-alpona-studio/AlponaStudio
 cpp-alpona-studio/AlponaCLI
 cpp-alpona-studio/test_graphics
 cpp-alpona-studio/*.exe
+cpp-alpona-studio/libfreeglut.dll
 cpp-alpona-studio/bin/
 cpp-alpona-studio/obj/
 cpp-alpona-studio/*.depend

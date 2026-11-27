@@ -14,7 +14,8 @@ On Windows, `make` is called **`mingw32-make`** (it comes with Code::Blocks' Min
 
 ## 1. Desktop app on Windows (Code::Blocks)
 
-1. Install Code::Blocks with MinGW, and FreeGLUT for MinGW — step-by-step instructions are in the main
+1. Install Code::Blocks with MinGW (64-bit). FreeGLUT 3.6.0 is bundled in `third_party/freeglut`
+   (headers, import library and `libfreeglut.dll`), so there is nothing else to install — see the main
    [README, Part B1](../README.md#b1-windows-with-codeblocks).
 2. Open **`AlponaStudio.cbp`** and press **F9** (Build and run). The app is built to `bin/Release/AlponaStudio.exe`.
 3. Later, double-click **`../RUN_CPP_DESKTOP.bat`** to start it without opening Code::Blocks.

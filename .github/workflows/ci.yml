@@ -56,33 +56,39 @@ jobs:
           AlponaCLI.exe --kolam 7x7 --export-png kolam.png --export-svg kolam.svg || exit /b 1
           AlponaCLI.exe --motif padma --export-png padma.png --export-stl padma.stl --mode pitha || exit /b 1
 
-      - name: "Part B1: install FreeGLUT for MinGW exactly as the README describes"
+      - name: "Part B1: build exactly like Code::Blocks F9 (AlponaStudio.cbp flags, bundled FreeGLUT)"
         shell: pwsh
+        working-directory: cpp-alpona-studio
         run: |
-          $zip = Join-Path $env:RUNNER_TEMP 'freeglut.zip'
-          Invoke-WebRequest -Uri 'https://www.transmissionzero.co.uk/files/software/development/GLUT/freeglut-MinGW.zip' -OutFile $zip -UseBasicParsing
-          Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP -Force
-          $fg = Join-Path $env:RUNNER_TEMP 'freeglut'
-          $mingw = Split-Path (Split-Path (Get-Command g++).Source)
-          Write-Host "MinGW folder: $mingw"
-          New-Item -ItemType Directory -Force -Path "$mingw\include\GL" | Out-Null
-          Copy-Item "$fg\include\GL\*" "$mingw\include\GL\" -Force
-          Copy-Item "$fg\lib\x64\libfreeglut.a" "$mingw\lib\" -Force
-          Copy-Item "$fg\bin\x64\freeglut.dll" "cpp-alpona-studio\" -Force
+          $cbp = [xml](Get-Content AlponaStudio.cbp)
+          $units = $cbp.CodeBlocks_project_file.Project.Unit | ForEach-Object { $_.filename } | Where-Object { $_ -like 'src/*.cpp' }
+          New-Item -ItemType Directory -Force -Path bin\Release | Out-Null
+          g++ -O2 -std=c++11 -Iinclude -Ithird_party/freeglut/include @units -o bin/Release/AlponaStudio.exe `
+              -static-libgcc -static-libstdc++ -Lthird_party/freeglut/lib/x64 -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
+          if ($LASTEXITCODE -ne 0) { throw 'Code::Blocks-equivalent build failed' }
+          cmd /c copy /Y "third_party\freeglut\bin\x64\libfreeglut.dll" "bin\Release"
+          $deps = objdump -p bin/Release/AlponaStudio.exe | Select-String 'DLL Name'
+          $deps
+          if ($deps -match 'libstdc|libgcc|libwinpthread') { throw 'AlponaStudio.exe needs MinGW runtime DLLs' }
 
-      - name: "Part B: build the OpenGL desktop app and start it with RUN_CPP_DESKTOP.bat"
+      - name: "Part B: RUN_CPP_DESKTOP.bat starts bin\\Release\\AlponaStudio.exe"
         shell: pwsh
         run: |
-          Push-Location cpp-alpona-studio
-          mingw32-make
-          if (-not (Test-Path 'AlponaStudio.exe')) { throw 'AlponaStudio.exe was not built' }
-          Pop-Location
           cmd /c "RUN_CPP_DESKTOP.bat < NUL"
-          Start-Sleep -Seconds 5
+          Start-Sleep -Seconds 6
           $app = Get-Process AlponaStudio -ErrorAction SilentlyContinue
           if (-not $app) { throw 'RUN_CPP_DESKTOP.bat did not start AlponaStudio.exe' }
-          Write-Host "AlponaStudio.exe is running (PID $($app.Id))."
+          Write-Host "AlponaStudio.exe is running (PID $($app.Id)) from $($app.Path)."
           $app | Stop-Process -Force
+
+      - name: "Part B2: mingw32-make builds the desktop app with the bundled FreeGLUT"
+        shell: cmd
+        working-directory: cpp-alpona-studio
+        run: |
+          mingw32-make || exit /b 1
+          if not exist AlponaStudio.exe exit /b 1
+          if not exist libfreeglut.dll exit /b 1
+          mingw32-make clean
 
   linux:
     name: Linux (npm + make + FreeGLUT)

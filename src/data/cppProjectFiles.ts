@@ -843,9 +843,17 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     cycle: 65,
     title: "SVG exports keep seed fills, undoable template & project loads, visible save failures & Windows-safe C++ tests",
     schedule: "fix(reliability)",
-    scope: "SVG export (web, CLI and desktop) turns each seed fill into crisp vector rectangles; templates, gallery projects and .alpona files can be undone; failed autosave and gallery saves are reported; gallery delete asks first; C++ test 9 no longer writes to /tmp, so mingw32-make test passes on Windows.",
+    scope: "SVG export (web, CLI and desktop) turns each seed fill into crisp vector rectangles; templates, gallery projects and .alpona files can be undone; failed autosave and gallery saves are reported; gallery delete asks first; C++ test 9 no…",
     authorHandle: "ShimulCoding",
     authorEmail: "shimulc17@gmail.com",
+  },
+  {
+    cycle: 66,
+    title: "bundle FreeGLUT 3.6.0 for 64-bit MinGW so Code::Blocks F9 and mingw32-make build on Windows with no extra download",
+    schedule: "fix(windows)",
+    scope: "The README FreeGLUT download site no longer exists (found by the Windows CI). FreeGLUT 3.6.0, built from the official source, now ships in third_party/freeglut; the Code::Blocks project, Makefile and launcher use it, and the C/C++ runtime is linked statically.",
+    authorHandle: "dipro20debnath",
+    authorEmail: "diprodebnath200@gmail.com",
   },
 ];
 

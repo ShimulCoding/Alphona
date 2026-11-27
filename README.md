@@ -22,7 +22,7 @@ The project contains **two programs**. You can run either one, or both:
 | | Program | What you need | Time to first run |
 | --- | --- | --- | --- |
 | **Part A** | **Web Studio** (the full app, all features) | Node.js | ~3 minutes |
-| **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks (MinGW) + FreeGLUT | ~10 minutes |
+| **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks with MinGW (FreeGLUT is included) | ~5 minutes |
 | **Part C** | Automated tests (57 TypeScript + 45 C++11) | Node.js, g++ | ~1 minute |
 
 ---
@@ -149,18 +149,11 @@ export and 4 views (**2D Studio, Image Lab NPR, 3D Courtyard, Night Diya 3D**). 
 
 ### B1. Windows with Code::Blocks
 1. Install **Code::Blocks** with MinGW (the `codeblocks-…mingw-setup.exe` from <https://www.codeblocks.org/downloads/binaries/>).
-2. Install **FreeGLUT for MinGW** (one time), if your Code::Blocks does not have it yet:
-   1. Download *freeglut 3.0.0 MinGW Package* from <https://www.transmissionzero.co.uk/software/freeglut-devel/>
-      and extract it.
-   2. Find your MinGW folder, usually `C:\Program Files\CodeBlocks\MinGW`.
-   3. Copy `freeglut\include\GL\*` → `MinGW\include\GL\` (create the `GL` folder if needed).
-   4. Copy `freeglut\lib\x64\libfreeglut.a` → `MinGW\lib\`
-      (use `freeglut\lib\libfreeglut.a` instead if your Code::Blocks/MinGW is 32-bit).
-   5. Copy `freeglut\bin\x64\freeglut.dll` → `C:\Windows\System32\`
-      (or next to `AlponaStudio.exe` in `cpp-alpona-studio\bin\Release\`).
-3. Open **`cpp-alpona-studio\AlponaStudio.cbp`** in Code::Blocks and press **F9** (Build and run).
-   The project already links `freeglut`, `opengl32`, `glu32`, `winmm` and `gdi32`.
-4. Next time, just double-click **`RUN_CPP_DESKTOP.bat`** — it starts the built app directly
+2. Open **`cpp-alpona-studio\AlponaStudio.cbp`** in Code::Blocks and press **F9** (Build and run).
+   Nothing else to install: **FreeGLUT 3.6.0 for 64-bit MinGW is bundled** in
+   `cpp-alpona-studio\third_party\freeglut`, the project already points to it, and the build copies
+   `libfreeglut.dll` next to `bin\Release\AlponaStudio.exe`.
+3. Next time, just double-click **`RUN_CPP_DESKTOP.bat`** — it starts the built app directly
    (if the app is not built yet, it tries `mingw32-make`, and otherwise opens the project in Code::Blocks).
 
 ### B2. Linux / macOS terminal
@@ -236,6 +229,7 @@ Alphona/
 └── cpp-alpona-studio/        C++11 engine
     ├── src/, include/        Engine, main.cpp (FreeGLUT desktop app), cli_pipeline.cpp (AlponaCLI)
     ├── tests/                test_graphics.cpp (45 tests)
+    ├── third_party/freeglut/ FreeGLUT 3.6.0 for 64-bit MinGW (Windows build, no install needed)
     ├── AlponaStudio.cbp      Code::Blocks project
     └── Makefile              make / make cli / make test
 ```
@@ -249,6 +243,6 @@ Alphona/
 | `npm install` fails | Check the internet connection. Then delete the `node_modules` folder and try again. |
 | Port 3000 is busy | Close the other program using it, or run `npx vite --port=3001 --open`. |
 | Browser shows an old version | Press `Ctrl+F5` to reload. |
-| Code::Blocks: `GL/freeglut.h: No such file or directory` or `cannot find -lfreeglut` | Do step B1.2 (install FreeGLUT into the MinGW folder). |
-| `freeglut.dll was not found` when starting the app | Copy `freeglut.dll` (step B1.2.5) next to `AlponaStudio.exe` or into `C:\Windows\System32`. |
+| Code::Blocks: `cannot find -lfreeglut` or `skipping incompatible libfreeglut.dll.a` | The bundled FreeGLUT is 64-bit: install the 64-bit Code::Blocks *mingw-setup* (the default download), and keep the `third_party` folder next to `AlponaStudio.cbp`. |
+| `libfreeglut.dll was not found` when starting the app | Copy `cpp-alpona-studio\third_party\freeglut\bin\x64\libfreeglut.dll` next to `AlponaStudio.exe` (the build normally does this). |
 | `make` is not recognized on Windows | Use `mingw32-make` (comes with Code::Blocks MinGW), or use Code::Blocks (B1). |

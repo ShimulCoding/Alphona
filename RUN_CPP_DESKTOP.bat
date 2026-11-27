@@ -23,14 +23,14 @@ if exist "AlponaStudio.exe" (
 rem --- 2. Not built yet: try to build it with MinGW make ------------------
 where mingw32-make >nul 2>nul
 if not errorlevel 1 (
-  echo [BUILD] Building the desktop app with mingw32-make ^(needs FreeGLUT installed in MinGW^)...
+  echo [BUILD] Building the desktop app with mingw32-make ^(FreeGLUT is bundled in third_party\freeglut^)...
   mingw32-make
   if exist "AlponaStudio.exe" (
     echo [SUCCESS] Built AlponaStudio.exe - starting it now.
     start "" /d "%CD%" "AlponaStudio.exe"
     exit /b 0
   )
-  echo [INFO] Desktop build failed - FreeGLUT is probably not installed. See README.md, section "Part B".
+  echo [INFO] Desktop build failed. See README.md, section "Part B" and "Troubleshooting".
   echo.
   echo [BUILD] Building the command-line tool AlponaCLI.exe instead ^(no OpenGL needed^)...
   mingw32-make cli
