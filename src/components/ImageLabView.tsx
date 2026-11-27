@@ -483,7 +483,7 @@ export function ImageLabView({
           </h1>
           <p className="text-sm leading-relaxed text-zinc-600">
             {labViewMode === 'filters'
-              ? 'CSE 401/402 CLO-6 — Apply gray-level point transforms, histogram equalization, 3×3 spatial convolution, binary mathematical morphology (flood-gap closing), and 2D Radix-2 FFT filters to your live Alpona raster buffer.'
+              ? 'Spatial & Frequency Domain Engine — Apply gray-level point transforms, histogram equalization, 3×3 spatial convolution, binary mathematical morphology (flood-gap closing), and 2D Radix-2 FFT filters to your live raster buffer.'
               : 'Non-Photorealistic Rendering (NPR) — Synthesizes 3-octave fBm mud, street asphalt, Tant cotton, and Patachitra substrates with Sobel wet rice-paste impasto relief, dry-brush bristle grain, and chalk speckle.'}
           </p>
         </div>
@@ -616,7 +616,10 @@ export function ImageLabView({
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-[620px] rounded-lg border border-zinc-300/90 bg-white p-3 shadow-sm">
+            <div
+              data-testid="canvas-continuity-surface"
+              className="canvas-continuity-surface mx-auto max-w-[620px] rounded-lg border border-zinc-300/90 bg-white p-3 shadow-sm"
+            >
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className="font-semibold text-zinc-900">
                   {domain === 'point'
@@ -697,7 +700,7 @@ export function ImageLabView({
             </div>
           )}
 
-          {/* Week 13 Pixel Relationships Report Card */}
+          {/* Pixel Topology & Adjacency Report Card */}
           {inspectPixels && pixelReport && (
             <div
               data-testid="pixel-relationships-card"
@@ -705,7 +708,7 @@ export function ImageLabView({
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-zinc-200/80 pb-2">
                 <h3 className="text-xs font-semibold text-zinc-900">
-                  Pixel Relationships Inspector (CSE 401 Week 13)
+                  Pixel Topology &amp; Metric Distance Inspector
                 </h3>
                 <span className="font-mono text-[11px] text-zinc-500">
                   Click image to set P{nextPickSlot}

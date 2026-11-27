@@ -173,9 +173,9 @@ export function Projection3DView({
           </h1>
           <p className="text-sm leading-relaxed text-zinc-600">
             {viewMode === 'projection'
-              ? 'CSE 401/402 CLO-4 & CLO-5 — Pure software 3D pipeline projecting your live Alpona courtyard with Parallel vs. Perspective projection, Week 11 anomalies, Painter’s Algorithm, and Z-Buffer occlusion.'
+              ? '3D Spatial & Occlusion Engine — Pure software 3D pipeline projecting your live artwork with Parallel vs. Perspective projection, near-plane camera frustum presets, Painter’s Algorithm, and Z-Buffer occlusion.'
               : viewMode === 'diya-lighting'
-                ? 'CSE 401/402 CLO-4/5 Illumination & Shading — Sobel 3×3 stroke-relief normal mapping with interactive earthen diya point lights, live Phong vs. Gouraud shading comparison, and 1440px night poster export.'
+                ? 'Specular & Diffuse Illumination Engine — Sobel 3×3 stroke-relief normal mapping with interactive earthen diya point lights, live Phong vs. Gouraud shading comparison, and 1440px night poster export.'
                 : 'Generate watertight binary .STL and Wavefront .OBJ heightfield meshes with Gaussian draft-angle bevels, recessed Pitha cavities, or mirrored saree woodblock stamps with an underside grip handle.'}
           </p>
         </div>
@@ -254,7 +254,10 @@ export function Projection3DView({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* Left: Software 3D Viewport + Live 4x4 Matrix */}
         <div className="space-y-5">
-          <div className="mx-auto max-w-[620px] rounded-lg border border-zinc-300/90 bg-white p-3 shadow-sm">
+          <div
+            data-testid="canvas-continuity-surface"
+            className="canvas-continuity-surface mx-auto max-w-[620px] rounded-lg border border-zinc-300/90 bg-white p-3 shadow-sm"
+          >
             <div className="mb-2 flex items-center justify-between text-xs">
               <span className="font-semibold text-zinc-900">
                 {sceneMode === 'courtyard-floor'
@@ -327,7 +330,7 @@ export function Projection3DView({
           <div className="mx-auto max-w-[620px] rounded-lg border border-zinc-200 bg-white p-5">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="text-sm font-semibold text-zinc-900">
-                Active 4×4 Projection Matrix (CLO-4)
+                Active 4×4 Projection Matrix
               </h2>
               <span className="font-mono text-xs text-zinc-500">
                 {params.projection === 'perspective'
@@ -381,13 +384,13 @@ export function Projection3DView({
             </div>
           </div>
 
-          {/* Week 11 Perspective Anomalies & Vanishing-Point Presets */}
+          {/* Perspective Camera Frustum & Vanishing-Point Presets */}
           <div className="p-5 space-y-2.5">
             <div className="flex items-baseline justify-between">
               <h2 className="text-sm font-semibold text-zinc-900">
-                Perspective Presets &amp; Anomalies
+                Perspective Presets &amp; Frustum
               </h2>
-              <span className="font-mono text-[11px] text-zinc-400">Wk 11</span>
+              <span className="font-mono text-[11px] text-zinc-400">Camera</span>
             </div>
             <div className="grid gap-1.5">
               {PERSPECTIVE_ANOMALY_PRESETS.map((preset) => {
@@ -431,7 +434,7 @@ export function Projection3DView({
               <h2 className="text-sm font-semibold text-zinc-900">
                 Projection Geometry
               </h2>
-              <span className="font-mono text-[11px] text-zinc-400">CLO-4</span>
+              <span className="font-mono text-[11px] text-zinc-400">4×4 Matrix</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {(
@@ -500,7 +503,7 @@ export function Projection3DView({
               <h2 className="text-sm font-semibold text-zinc-900">
                 Hidden Surface Removal
               </h2>
-              <span className="font-mono text-[11px] text-zinc-400">CLO-5</span>
+              <span className="font-mono text-[11px] text-zinc-400">Depth Buffer</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {HSR_MODES.map((m) => {

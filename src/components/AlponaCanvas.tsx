@@ -866,7 +866,8 @@ export function AlponaCanvas({
 
       {/* Interactive Stage Container */}
       <div
-        className={`relative mx-auto w-full max-w-[680px] ${
+        data-testid="canvas-continuity-surface"
+        className={`canvas-continuity-surface relative mx-auto w-full max-w-[680px] ${
           greetingCard.enabled
             ? 'rounded-lg border-2 border-[#B91C1C]/35 bg-[#FAF8F3] p-5 sm:p-7 shadow-sm'
             : 'rounded-lg border border-zinc-300/90 bg-white p-2 sm:p-3 shadow-sm'
