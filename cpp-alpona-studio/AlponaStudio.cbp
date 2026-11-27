@@ -29,6 +29,7 @@
 		<Unit filename="include/canvas_assist.h" />
 		<Unit filename="include/canvas_buffer.h" />
 		<Unit filename="include/colorway_remap.h" />
+		<Unit filename="include/desktop_gui.h" />
 		<Unit filename="include/floodfill.h" />
 		<Unit filename="include/frame_cache.h" />
 		<Unit filename="include/frieze_border.h" />
@@ -56,6 +57,7 @@
 		<Unit filename="src/bezier.cpp" />
 		<Unit filename="src/canvas_assist.cpp" />
 		<Unit filename="src/colorway_remap.cpp" />
+		<Unit filename="src/desktop_gui.cpp" />
 		<Unit filename="src/floodfill.cpp" />
 		<Unit filename="src/frame_cache.cpp" />
 		<Unit filename="src/frieze_border.cpp" />

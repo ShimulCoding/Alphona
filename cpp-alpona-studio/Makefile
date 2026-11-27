@@ -8,7 +8,7 @@ CORE_SRC := src/transforms.cpp src/rasterizer.cpp src/floodfill.cpp src/motifs.c
             src/colorway_remap.cpp src/stroke_craft.cpp src/stl_stamp.cpp \
             src/weave_chart.cpp src/generative_composer.cpp src/natural_media.cpp \
             src/canvas_assist.cpp src/layer_stack.cpp src/layer_transform.cpp \
-            src/viewport_camera.cpp src/frame_cache.cpp
+            src/viewport_camera.cpp src/frame_cache.cpp src/desktop_gui.cpp
 
 ifeq ($(OS),Windows_NT)
   GL_LIBS := -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
