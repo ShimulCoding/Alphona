@@ -2,6 +2,7 @@
 #include "../include/canvas_assist.h"
 #include "../include/canvas_buffer.h"
 #include "../include/colorway_remap.h"
+#include "../include/desktop_gui.h"
 #include "../include/floodfill.h"
 #include "../include/frame_cache.h"
 #include "../include/frieze_border.h"
@@ -35,7 +36,7 @@
 using namespace alpona;
 
 int main() {
-    // 1. CLO-1: Bresenham & DDA integer/incremental line drawing
+    // 1. CORE-1: Bresenham & DDA integer/incremental line drawing
     {
         CanvasBuffer buf(50, 50);
         Color white = {255, 255, 255, 255};
@@ -45,7 +46,7 @@ int main() {
         assert(buf.getPixel(10, 25) == white);
     }
 
-    // 2. CLO-1/2: Bresenham midpoint circle 8-way symmetry
+    // 2. CORE-1/2: Bresenham midpoint circle 8-way symmetry
     {
         CanvasBuffer buf(100, 100);
         Color red = {220, 38, 38, 255};
@@ -56,7 +57,7 @@ int main() {
         assert(buf.getPixel(50, 30) == red);
     }
 
-    // 3. CLO-2: 2D symmetry & 3x3 homogeneous matrix + inverse
+    // 3. CORE-2: 2D symmetry & 3x3 homogeneous matrix + inverse
     {
         Point2D center = {100.0, 100.0};
         for (int n : {4, 6, 8, 12}) {
@@ -77,7 +78,7 @@ int main() {
         assert(std::fabs(rt.x - orig.x) < 1e-6 && std::fabs(rt.y - orig.y) < 1e-6);
     }
 
-    // 4. CLO-3: Cohen-Sutherland & Liang-Barsky line clipping agreement
+    // 4. CORE-3: Cohen-Sutherland & Liang-Barsky line clipping agreement
     {
         ClipBounds bounds = {20.0, 20.0, 100.0, 100.0};
         Point2D a1 = {0.0, 50.0}, b1 = {140.0, 50.0};
@@ -92,7 +93,7 @@ int main() {
         assert(!liangBarskyClip(outA, outB, bounds));
     }
 
-    // 5. CLO-3/5: Sutherland-Hodgman polygon clipping
+    // 5. CORE-3/5: Sutherland-Hodgman polygon clipping
     {
         ClipBounds bounds = {20.0, 20.0, 80.0, 80.0};
         std::vector<Point2D> diamond = {{50, 5}, {70, 50}, {50, 95}, {30, 50}};
@@ -103,7 +104,7 @@ int main() {
         }
     }
 
-    // 6. CLO-1: Iterative Seed Fill containment
+    // 6. CORE-1: Iterative Seed Fill containment
     {
         CanvasBuffer buf(40, 40);
         Color black = {0, 0, 0, 255}, white = {255, 255, 255, 255}, gold = {245, 158, 11, 255};
@@ -116,7 +117,7 @@ int main() {
         assert(buf.getPixel(5, 5) == black);
     }
 
-    // 7. CLO-4/5: 3D Projection (Perspective vs Parallel) & Z-Buffer HSR
+    // 7. CORE-4/5: 3D Projection (Perspective vs Parallel) & Z-Buffer HSR
     {
         auto mesh = buildAlponaMonumentMesh(8);
         assert(mesh.size() > 20);
@@ -131,7 +132,7 @@ int main() {
         assert(stats.zBufferRejects > 100);
     }
 
-    // 8. CLO-6: Image Point Ops, Spatial Sobel Filter & 2D FFT Frequency Filter
+    // 8. CORE-6: Image Point Ops, Spatial Sobel Filter & 2D FFT Frequency Filter
     {
         CanvasBuffer buf(64, 64);
         buf.clear({22, 22, 27, 255});
@@ -169,7 +170,7 @@ int main() {
         assert(static_cast<uint8_t>(sig[0]) == 137 && sig[1] == 'P' && sig[2] == 'N' && sig[3] == 'G');
     }
 
-    // 10. CLO-3/5: Weiler-Atherton concave polygon clipping splits U-polygon cleanly
+    // 10. CORE-3/5: Weiler-Atherton concave polygon clipping splits U-polygon cleanly
     {
         ClipBounds bounds = {20.0, 20.0, 80.0, 80.0};
         std::vector<Point2D> concaveU = {
@@ -186,7 +187,7 @@ int main() {
         }
     }
 
-    // 11. CLO-6: Pixel Relationships (N4, N8, D4, D8, De, BFS) & Printable Stencil
+    // 11. CORE-6: Pixel Topology (N4, N8, D4, D8, De, BFS) & Printable Stencil
     {
         CanvasBuffer buf(32, 32);
         buf.clear({16, 16, 20, 255});
@@ -211,7 +212,7 @@ int main() {
         assert(hasInk && hasPaper);
     }
 
-    // 12. CLO-4/5: 3D Courtyard Floor Texture Projection & View Confusion Anomaly
+    // 12. CORE-4/5: 3D Courtyard Floor Texture Projection & Near-Plane Frustum Clipping
     {
         CanvasBuffer tex(64, 64);
         tex.clear({43, 22, 21, 255});
@@ -258,7 +259,7 @@ int main() {
         assert(xml.find("</svg>") != std::string::npos);
     }
 
-    // 15. CLO-6 Binary Mathematical Morphology Closing (Micro-Gap Sealer)
+    // 15. CORE-6 Binary Mathematical Morphology Closing (Micro-Gap Sealer)
     {
         CanvasBuffer buf(32, 32);
         buf.clear({16, 16, 20, 255});
@@ -897,6 +898,71 @@ int main() {
         assert(miss.groupName.empty() && miss.hitLayerId == -1 && miss.layerIds.empty());
     }
 
-    std::cout << "All 41 C++11 CSE 401/402 Alpona Studio tests passed!" << std::endl;
+    // 42. Code::Blocks OpenGL Desktop Studio GUI Layout, Button Hit-Testing & Stage Coordinate Mapping
+    {
+        DesktopGuiLayout layout;
+        assert(layout.windowWidth == 1000 && layout.windowHeight == 796);
+        assert(layout.canvasX == 270 && layout.canvasY == 48 && layout.canvasSize == 720);
+
+        std::vector<DesktopGuiButton> buttons = buildDesktopGuiButtons(layout);
+        assert(buttons.size() == 37);
+
+        // Hit-test Top Toolbar "Brush" button (270..334, 7..35)
+        DesktopGuiHitResult hitBrush = hitTestDesktopGui(285, 20, layout);
+        assert(hitBrush.hitGui == true && hitBrush.hitCanvas == false);
+        assert(hitBrush.buttonId == DesktopButtonId::ToolFreehand);
+        assert(hitBrush.buttonLabel == "Brush");
+
+        // Hit-test Top Toolbar "Save PNG" CTA button (748..828, 7..35)
+        DesktopGuiHitResult hitExport = hitTestDesktopGui(780, 20, layout);
+        assert(hitExport.hitGui == true && hitExport.buttonId == DesktopButtonId::ExportPng);
+
+        // Hit-test Left Studio Dock "Boishakhi Sun" quick-start template button (134..246, 74..104)
+        DesktopGuiHitResult hitTemplate = hitTestDesktopGui(160, 88, layout);
+        assert(hitTemplate.hitGui == true && hitTemplate.buttonId == DesktopButtonId::TemplateBoishakhiSun);
+
+        // Hit-test Left Studio Dock "Sindoor" pigment swatch (94..166, 178..208)
+        DesktopGuiHitResult hitPigment = hitTestDesktopGui(110, 190, layout);
+        assert(hitPigment.hitGui == true && hitPigment.buttonId == DesktopButtonId::PigmentCrimson);
+
+        // Hit-test Left Studio Dock "Image Lab NPR" & "3D Courtyard" workspace view buttons
+        DesktopGuiHitResult hitNpr = hitTestDesktopGui(160, 568, layout);
+        assert(hitNpr.hitGui == true && hitNpr.buttonId == DesktopButtonId::ViewImageLab);
+        DesktopGuiHitResult hit3d = hitTestDesktopGui(40, 600, layout);
+        assert(hit3d.hitGui == true && hit3d.buttonId == DesktopButtonId::View3D);
+
+        // Hit-test inside the 720x720 Canvas Stage (center at window 630, 408 -> local 360, 360)
+        DesktopGuiHitResult hitStage = hitTestDesktopGui(630, 408, layout);
+        assert(hitStage.hitGui == false && hitStage.hitCanvas == true);
+        assert(std::abs(hitStage.canvasLocalPoint.x - 360.0) < 1e-6);
+        assert(std::abs(hitStage.canvasLocalPoint.y - 360.0) < 1e-6);
+    }
+
+    // 43. Branded Startup Splash Transition Progress & Phase Lifecycle (computeDesktopSplashProgress)
+    {
+        DesktopSplashState s0 = computeDesktopSplashProgress(0, 720, false);
+        assert(s0.phase == DesktopSplashPhase::EmblemBloom);
+        assert(s0.progressPct == 0 && s0.isComplete == false);
+        assert(std::abs(s0.overlayOpacity - 1.0) < 1e-6);
+
+        DesktopSplashState sMid = computeDesktopSplashProgress(360, 720, false);
+        assert(sMid.phase == DesktopSplashPhase::StageCalibrate);
+        assert(sMid.progressPct == 50 && sMid.isComplete == false);
+        assert(std::abs(sMid.lotusRotationDeg - 11.25) < 1e-6);
+
+        DesktopSplashState sFade = computeDesktopSplashProgress(648, 720, false);
+        assert(sFade.phase == DesktopSplashPhase::RevealFade);
+        assert(sFade.overlayOpacity < 1.0 && sFade.overlayOpacity > 0.0);
+
+        DesktopSplashState sDone = computeDesktopSplashProgress(720, 720, false);
+        assert(sDone.phase == DesktopSplashPhase::Complete);
+        assert(sDone.progressPct == 100 && sDone.isComplete == true);
+        assert(std::abs(sDone.overlayOpacity - 0.0) < 1e-6);
+
+        DesktopSplashState sSkipped = computeDesktopSplashProgress(120, 720, true);
+        assert(sSkipped.isComplete == true && sSkipped.progressPct == 100);
+    }
+
+    std::cout << "All 43 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }

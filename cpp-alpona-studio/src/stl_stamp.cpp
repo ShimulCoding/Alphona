@@ -277,7 +277,7 @@ std::vector<uint8_t> serializeBinaryStl(const StampMeshSummary& mesh) {
     const size_t count = mesh.triangles.size();
     std::vector<uint8_t> bytes(84 + count * 50, 0);
 
-    const std::string header = "Alpona Studio 3D Pitha Mold & Woodblock Stamp (CSE 401/402)";
+    const std::string header = "Alpona Studio 3D Relief Stamp (v1.4.2)";
     for (size_t i = 0; i < header.size() && i < 80; ++i) {
         bytes[i] = static_cast<uint8_t>(header[i]);
     }

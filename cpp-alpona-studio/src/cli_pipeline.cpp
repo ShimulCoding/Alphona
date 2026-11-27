@@ -1,6 +1,6 @@
 /**
  * AlponaCLI — Standalone Zero-OpenGL C++11 Headless Maker & Graphics Pipeline
- * CSE 401/402 Computer Graphics & Image Processing Lab, Metropolitan University, Sylhet
+ * Alpona Studio v1.4.2 — Enterprise 2D/3D Vector & Raster Core
  *
  * Exposes all Alpona Studio C++11 modules from the command line without requiring
  * a GLUT/X11 window:
@@ -86,7 +86,7 @@ void writeOpsToSvg(
 
 void printUsage() {
     std::cout
-        << "AlponaCLI (C++11 Headless Maker & CSE 401/402 Pipeline)\n"
+        << "AlponaCLI (Alpona Studio v1.4.2 Headless Pipeline)\n"
         << "Usage:\n"
         << "  AlponaCLI [options]\n\n"
         << "Input Source:\n"
