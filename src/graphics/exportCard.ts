@@ -30,7 +30,7 @@ export const FESTIVAL_GREETING_PRESETS: Array<{
   {
     label: 'Minimal',
     headline: 'Alpona Studio',
-    subtitle: 'Hand-crafted 2D Bengal symmetry artwork',
+    subtitle: 'Hand-crafted 2D/3D symmetry artwork',
   },
 ];
 

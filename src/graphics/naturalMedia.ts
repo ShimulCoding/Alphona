@@ -25,7 +25,7 @@ export const NATURAL_SUBSTRATES: NaturalSubstrateSpec[] = [
     id: 'ekushey-asphalt',
     name: 'Ekushey Street Asphalt',
     bengali: 'একুশে আলপনা পিচ',
-    desc: 'Dhaka University rough street bitumen grain with chalk-powder scatter',
+    desc: 'Weathered urban street bitumen grain with chalk-powder scatter',
   },
   {
     id: 'tant-cotton',

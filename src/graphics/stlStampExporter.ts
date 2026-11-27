@@ -319,7 +319,7 @@ export function serializeBinaryStl(mesh: StampMeshSummary): Uint8Array {
   const view = new DataView(buffer);
   const bytes = new Uint8Array(buffer);
 
-  const header = 'Alpona Studio 3D Pitha Mold & Woodblock Stamp (CSE 401/402)';
+  const header = 'Alpona Studio 3D Relief Stamp (v1.4.2)';
   for (let i = 0; i < header.length && i < 80; i++) {
     bytes[i] = header.charCodeAt(i);
   }

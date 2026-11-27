@@ -158,3 +158,41 @@ export function clearDraftFromStorage(
     // Ignore storage quota / privacy mode errors
   }
 }
+
+export const DRAFT_SYNC_LABEL = 'Synced to Local Storage';
+export const DEFAULT_DRAFT_SYNC_PULSE_MS = 2800;
+
+export interface DraftSyncIndicatorState {
+  visible: boolean;
+  isPulsing: boolean;
+  label: string;
+  lastSyncedAt: number | null;
+}
+
+export function computeDraftSyncIndicator(
+  lastSyncedAt: number | null,
+  nowMs: number,
+  pulseWindowMs: number = DEFAULT_DRAFT_SYNC_PULSE_MS
+): DraftSyncIndicatorState {
+  if (
+    lastSyncedAt === null ||
+    !Number.isFinite(lastSyncedAt) ||
+    lastSyncedAt <= 0
+  ) {
+    return {
+      visible: false,
+      isPulsing: false,
+      label: '',
+      lastSyncedAt: null,
+    };
+  }
+  const elapsed = Math.max(0, nowMs - lastSyncedAt);
+  const windowMs = Math.max(400, pulseWindowMs);
+  return {
+    visible: true,
+    isPulsing: elapsed <= windowMs,
+    label: DRAFT_SYNC_LABEL,
+    lastSyncedAt,
+  };
+}
+
