@@ -217,7 +217,7 @@ export function DiyaLightingPanel({
         <section className="space-y-3 p-4">
           <div className="flex items-baseline justify-between">
             <h2 className="text-sm font-semibold text-zinc-900">Shading Model</h2>
-            <span className="font-mono text-[11px] text-zinc-500">CLO-4/5</span>
+            <span className="font-mono text-[11px] text-zinc-500">BRDF</span>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             {(

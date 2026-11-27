@@ -273,7 +273,7 @@ export function StencilBridgerPanel({
               BFS Connectivity Audit
             </h2>
             <span className="font-mono text-[11px] text-zinc-500">
-              CSE 402 · 8-Adj
+              BFS · 8-Adj
             </span>
           </div>
 

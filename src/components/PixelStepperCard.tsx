@@ -68,7 +68,7 @@ export function PixelStepperCard() {
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-200/80 pb-3.5">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">
-            16× Zoomed Pixel-Grid Algorithm Stepper (CLO-2 Viva Lab)
+            16× Zoomed Pixel-Grid Algorithm Stepper (Raster Kernel Inspector)
           </h2>
           <p className="mt-1 text-xs text-zinc-600">
             Step through exact pixel coordinates and integer/floating-point decision

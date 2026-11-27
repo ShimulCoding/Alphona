@@ -260,7 +260,7 @@ export function FriezeBorderPanel({
             <h2 className="text-sm font-semibold text-zinc-900">
               7 Frieze Symmetry Groups
             </h2>
-            <span className="font-mono text-[11px] text-zinc-500">CLO-4</span>
+            <span className="font-mono text-[11px] text-zinc-500">1D Symmetry</span>
           </div>
 
           <div className="grid grid-cols-2 gap-1.5">

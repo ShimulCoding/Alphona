@@ -310,7 +310,7 @@ export function PhotoUnwarperPanel() {
         <section className="space-y-3 p-4">
           <div className="flex items-baseline justify-between">
             <h2 className="text-sm font-semibold text-zinc-900">Street Photo Input</h2>
-            <span className="font-mono text-[11px] text-zinc-500">CLO-4/6</span>
+            <span className="font-mono text-[11px] text-zinc-500">3×3 Homography</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button

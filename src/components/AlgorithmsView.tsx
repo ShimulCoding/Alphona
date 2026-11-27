@@ -21,44 +21,44 @@ interface AlgorithmsViewProps {
   onReturnToStudio: () => void;
 }
 
-const CLO_COVERAGE = [
+const ENGINE_SUBSYSTEM_MATRIX = [
   {
-    clo: 'CLO-1',
-    weeks: 'Wk 1–2',
-    topic: 'Graphics Pipeline, Framebuffer & Output Primitives',
+    moduleCode: 'CORE-1',
+    tier: 'Stage I',
+    topic: 'Graphics Pipeline, RGBA Framebuffer & Output Primitives',
     module: 'canvas_buffer.h · engine.ts',
   },
   {
-    clo: 'CLO-2',
-    weeks: 'Wk 3–5',
-    topic: 'DDA & Bresenham Line, Midpoint Circle, RGB/HSV/CMYK Models',
+    moduleCode: 'CORE-2',
+    tier: 'Stage II',
+    topic: 'DDA & Bresenham Line, Midpoint Circle, RGB/HSV/CMYK Color Spaces',
     module: 'rasterizer.cpp · colorModels.ts',
   },
   {
-    clo: 'CLO-3',
-    weeks: 'Wk 5–6, 9–10',
+    moduleCode: 'CORE-3',
+    tier: 'Stage III',
     topic: '3×3 Homogeneous 2D Transforms + Inverse, Cohen-Sutherland & Liang-Barsky',
     module: 'transforms.cpp · transforms.ts',
   },
   {
-    clo: 'CLO-4',
-    weeks: 'Wk 7–8, 11',
+    moduleCode: 'CORE-4',
+    tier: 'Stage IV',
     topic:
-      '3D Courtyard Floor Projection, Parallel vs. Perspective & View Confusion Anomalies',
+      '3D Courtyard Floor Projection, Parallel vs. Perspective & Near-Plane Camera Clipping',
     module: 'projection3d.cpp · Projection3DView',
   },
   {
-    clo: 'CLO-5',
-    weeks: 'Wk 10–12',
+    moduleCode: 'CORE-5',
+    tier: 'Stage V',
     topic:
       "Sutherland-Hodgman & Weiler-Atherton Concave Polygon Clipping, Painter's & Z-Buffer HSR",
     module: 'transforms.cpp · projection3d.cpp',
   },
   {
-    clo: 'CLO-6',
-    weeks: 'Wk 13–14',
+    moduleCode: 'CORE-6',
+    tier: 'Stage VI',
     topic:
-      'Pixel Relationships (N₄/N₈/D₄/D₈/Dₑ), Point Ops, Printable Stencil, 3×3 Convolution & 2D FFT',
+      'Pixel Topology (N₄/N₈/D₄/D₈/Dₑ), Point Ops, Printable Stencil, 3×3 Convolution & 2D FFT',
     module: 'image_processing.cpp · ImageLabView',
   },
 ];
@@ -115,11 +115,11 @@ export function AlgorithmsView({
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-zinc-200 pb-6">
         <div className="max-w-2xl space-y-2">
           <h1 className="font-display text-3xl font-semibold tracking-tight text-zinc-950">
-            Graphics Pipeline, Matrices & CLO 1–6 Map
+            Graphics Pipeline, Matrices &amp; Core Architecture Map
           </h1>
           <p className="text-sm leading-relaxed text-zinc-600">
             Live framebuffer telemetry, 2×2 symmetry and 3×3 homogeneous
-            transformation matrices, and complete CSE 401/402 syllabus coverage.
+            transformation matrices, and complete C++11 &amp; TypeScript subsystem architecture.
           </p>
         </div>
         <button
@@ -208,7 +208,7 @@ export function AlgorithmsView({
               3×3 Homogeneous Matrix M &amp; Inverse M⁻¹
             </h2>
             <span className="font-mono text-xs tabular-nums text-zinc-500">
-              CLO-3
+              CORE-3 · Mat3
             </span>
           </div>
 
@@ -314,29 +314,29 @@ export function AlgorithmsView({
         </div>
       </section>
 
-      {/* Complete CSE 401/402 CLO 1-6 Syllabus Table */}
-      <section aria-label="CSE 401 and 402 CLO coverage">
+      {/* Core Graphics Engine Subsystem Architecture Table */}
+      <section aria-label="Core graphics engine subsystem matrix">
         <h2 className="mb-4 text-sm font-semibold text-zinc-900">
-          CSE 401 &amp; CSE 402 Course Learning Outcomes (CLO 1–6)
+          Core Graphics Engine Subsystem Matrix (Stages I–VI)
         </h2>
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-zinc-200 bg-zinc-50/80 text-zinc-600">
               <tr>
-                <th className="px-4 py-3 font-semibold">CLO</th>
-                <th className="px-4 py-3 font-semibold">Weeks</th>
-                <th className="px-4 py-3 font-semibold">Implemented Algorithms &amp; Topics</th>
+                <th className="px-4 py-3 font-semibold">Subsystem</th>
+                <th className="px-4 py-3 font-semibold">Pipeline Tier</th>
+                <th className="px-4 py-3 font-semibold">Implemented Algorithms &amp; Capabilities</th>
                 <th className="px-4 py-3 font-semibold">C++11 &amp; Web Modules</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200/70">
-              {CLO_COVERAGE.map((row) => (
-                <tr key={row.clo} className="hover:bg-zinc-50/60">
+              {ENGINE_SUBSYSTEM_MATRIX.map((row) => (
+                <tr key={row.moduleCode} className="hover:bg-zinc-50/60">
                   <td className="px-4 py-3 font-mono font-semibold text-[#B91C1C] whitespace-nowrap">
-                    {row.clo}
+                    {row.moduleCode}
                   </td>
                   <td className="px-4 py-3 font-mono text-zinc-500 whitespace-nowrap">
-                    {row.weeks}
+                    {row.tier}
                   </td>
                   <td className="px-4 py-3 text-zinc-800">{row.topic}</td>
                   <td className="px-4 py-3 font-mono text-zinc-600 whitespace-nowrap">

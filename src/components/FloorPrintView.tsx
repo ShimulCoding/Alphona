@@ -667,7 +667,7 @@ export function FloorPrintView({
               )}
               <p className="text-[11px] leading-relaxed text-zinc-500">
                 Upload a photo of your balcony, courtyard, living room tiles, or
-                campus street and align the 4 red corner pins to the floor plane.
+                plaza walkway and align the 4 red corner pins to the floor plane.
               </p>
             </section>
 
@@ -676,7 +676,7 @@ export function FloorPrintView({
                 <h2 className="text-sm font-semibold text-zinc-900">
                   Surface Blending
                 </h2>
-                <span className="font-mono text-[11px] text-zinc-500">CLO-6</span>
+                <span className="font-mono text-[11px] text-zinc-500">Shader</span>
               </div>
 
               <div className="grid grid-cols-3 gap-1.5">

@@ -618,7 +618,7 @@ export function ControlDeck({
               </div>
             )}
 
-            {/* Line Rasterizer Selector (CLO-2: Bresenham vs DDA — visible in Lab Mode) */}
+            {/* Line Rasterizer Selector (Bresenham vs DDA — visible in Engine Specs Mode) */}
             {labMode && (
               <div
                 data-testid="lab-rasterizer-selector"
@@ -627,7 +627,7 @@ export function ControlDeck({
                 <div className="mb-1.5 flex items-center justify-between text-xs text-zinc-600">
                   <span>Line rasterizer</span>
                   <span className="font-mono text-[11px] text-zinc-400">
-                    CLO-2
+                    Kernel
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -1281,7 +1281,7 @@ export function ControlDeck({
             )}
           </div>
 
-          {/* Clipping Window & 2D Homogeneous Matrix (CLO-3 & CLO-5 — visible in Lab Mode) */}
+          {/* Clipping Window & 2D Homogeneous Matrix (visible in Engine Specs Mode) */}
           {labMode && (
           <div data-testid="lab-clipping-transform" className="p-5 space-y-4">
             <div>
@@ -1309,7 +1309,7 @@ export function ControlDeck({
                 <div className="space-y-3 rounded-md border border-amber-200/90 bg-amber-50/40 p-3">
                   <div>
                     <div className="mb-1 text-[11px] font-medium text-zinc-600">
-                      Line clipping (CLO-3)
+                      Line clipping algorithm
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       {(
@@ -1345,7 +1345,7 @@ export function ControlDeck({
 
                   <div>
                     <div className="mb-1 text-[11px] font-medium text-zinc-600">
-                      Polygon clipping (CLO-5)
+                      Polygon clipping algorithm
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       {(
