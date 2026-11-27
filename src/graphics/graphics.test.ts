@@ -177,6 +177,7 @@ import {
 import {
   createCommittedFrameCache,
   renderWithFrameCache,
+  FRAME_SNAPSHOT_BUDGET_BYTES,
 } from './frameCache';
 import { getCanvasContinuityTransition } from './viewContinuity';
 import {
@@ -2409,4 +2410,50 @@ test('61. 2x HD scaling reuses the scaled copy of unchanged strokes', () => {
   assert.equal(second[0], first[0]);
   assert.deepEqual(second[1].kind === 'line' && second[1].p1, { x: 6, y: 8 });
   assert.notEqual(scaleOpsForHd([op], 3)[0], first[0]);
+});
+
+test('62. Undo restores a recent cached frame instead of re-rasterizing every stroke', () => {
+  const W = 120;
+  const bgHex = '#16161B';
+  const mk = () => ({ width: W, height: W, data: new Uint8ClampedArray(W * W * 4) });
+  const stroke = (id: string, x: number): DrawOperation => ({ id, kind: 'freehand', points: [{ x, y: 20 }, { x: x + 10, y: 34 }], color: '#F59E0B', thickness: 3, symmetry: { sectors: 6, reflect: true } });
+  const cache = createCommittedFrameCache();
+  const cached = mk();
+  const direct = mk();
+  const same = (ops: DrawOperation[]) => {
+    renderScene(direct, bgHex, ops, null, {});
+    assert.deepEqual(cached.data, direct.data);
+  };
+
+  const s0 = [stroke('a', 40)];
+  const s1 = [...s0, stroke('b', 50)];
+  const s2 = [...s1, stroke('c', 60)];
+  renderWithFrameCache(cache, cached, bgHex, s0, null, {});
+  renderWithFrameCache(cache, cached, bgHex, s1, null, {});
+  renderWithFrameCache(cache, cached, bgHex, s2, null, {});
+  assert.equal(cache.fullRebuilds, 1);
+
+  // Undo twice, then redo: every state comes from the snapshot cache, pixel-identical.
+  renderWithFrameCache(cache, cached, bgHex, s1, null, {});
+  same(s1);
+  renderWithFrameCache(cache, cached, bgHex, s0, null, {});
+  same(s0);
+  renderWithFrameCache(cache, cached, bgHex, s1, null, {});
+  same(s1);
+  assert.equal(cache.fullRebuilds, 1);
+  assert.equal(cache.snapshotRestores, 3);
+
+  // A different array holding the same operation objects (2x HD rescale) still matches.
+  renderWithFrameCache(cache, cached, bgHex, [...s0], null, {});
+  assert.equal(cache.snapshotRestores, 4);
+  same(s0);
+
+  // Snapshots never survive a background or option change.
+  renderWithFrameCache(cache, cached, '#7A3222', s1, null, {});
+  assert.equal(cache.fullRebuilds, 2);
+  renderWithFrameCache(cache, cached, '#7A3222', s0, null, {});
+  assert.equal(cache.fullRebuilds, 3);
+
+  // Memory budget: never more snapshots than the cap allows.
+  assert.ok(cache.snapshots.length <= Math.max(2, Math.floor(FRAME_SNAPSHOT_BUDGET_BYTES / (W * W * 4))));
 });

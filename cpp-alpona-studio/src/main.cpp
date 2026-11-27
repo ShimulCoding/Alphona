@@ -136,6 +136,15 @@ void commitHistoryChanged() {
     }
 }
 
+// Undo / redo move along the history: restore a stored frame when one exists.
+void commitHistoryJumped() {
+    ++gHistoryRevision;
+    gFrameCache.jumpToCommitted(gBuffer, gBgColor, gHistory, gHistoryRevision);
+    if (gWorkspaceView != DesktopWorkspaceView::Studio2D) {
+        rebuildWorkspaceViewBuffer();
+    }
+}
+
 // New stroke / fill / redo only append to gHistory: draw just the new operation on the
 // cached frame instead of re-rasterizing every stroke.
 void commitHistoryAppended() {
@@ -488,7 +497,7 @@ void executeGuiButtonAction(DesktopButtonId id) {
             if (!gHistory.empty()) {
                 gRedoStack.push_back(gHistory.back());
                 gHistory.pop_back();
-                commitHistoryChanged();
+                commitHistoryJumped();
                 gStatusToast = "Undid last stroke (" + std::to_string(gHistory.size()) + " strokes on canvas).";
             }
             break;
@@ -496,7 +505,7 @@ void executeGuiButtonAction(DesktopButtonId id) {
             if (!gRedoStack.empty()) {
                 gHistory.push_back(gRedoStack.back());
                 gRedoStack.pop_back();
-                commitHistoryAppended();
+                commitHistoryJumped();
                 gStatusToast = "Redid stroke (" + std::to_string(gHistory.size()) + " strokes on canvas).";
             }
             break;

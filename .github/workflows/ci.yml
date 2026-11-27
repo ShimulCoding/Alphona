@@ -39,14 +39,14 @@ jobs:
           if (-not $ok) { throw 'The web studio did not start on http://localhost:3000' }
           Write-Host 'Web studio served http://localhost:3000 successfully.'
 
-      - name: "Part C: type check, 61 TypeScript tests and production build"
+      - name: "Part C: type check, 62 TypeScript tests and production build"
         shell: cmd
         run: |
           call npm run lint || exit /b 1
           call npm test || exit /b 1
           call npm run build || exit /b 1
 
-      - name: "Part C: 47 C++11 tests and AlponaCLI (mingw32-make)"
+      - name: "Part C: 48 C++11 tests and AlponaCLI (mingw32-make)"
         shell: cmd
         working-directory: cpp-alpona-studio
         run: |

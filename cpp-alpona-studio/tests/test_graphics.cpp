@@ -1175,6 +1175,62 @@ int main() {
         assert(cache.fullRebuilds() == 2);
     }
 
-    std::cout << "All 47 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
+    // 48. Undo / redo restore cached frames instead of re-rasterizing (TS parity: test 62)
+    {
+        const Color bg = {22, 22, 27, 255};
+        std::vector<DrawOperation> history = buildPadmaLotusMotif(160);
+        CommittedFrameCache cache;
+        CanvasBuffer cached(160, 160), direct(160, 160);
+        auto same = [&]() {
+            direct.clear(bg);
+            for (size_t i = 0; i < history.size(); ++i) executeOperation(direct, history[i]);
+            for (int y = 0; y < 160; ++y)
+                for (int x = 0; x < 160; ++x)
+                    assert(cached.getPixel(x, y) == direct.getPixel(x, y));
+        };
+        auto stroke = [](double x, Color c) {
+            DrawOperation op;
+            op.kind = ToolKind::Freehand;
+            op.points = {{x, 20.0}, {x + 10.0, 34.0}};
+            op.color = c;
+            op.thickness = 3;
+            op.symmetry = SymmetryConfig(6, true);
+            return op;
+        };
+        cache.render(cached, bg, history, 1);
+        history.push_back(stroke(40.0, Color{245, 158, 11, 255}));
+        cache.appendCommitted(cached, bg, history, 2);
+        history.push_back(stroke(55.0, Color{220, 38, 38, 255}));
+        cache.appendCommitted(cached, bg, history, 3);
+        assert(cache.fullRebuilds() == 1);
+
+        // Undo twice, redo once: frames come back from snapshots, pixel-identical.
+        DrawOperation redo2 = history.back();
+        history.pop_back();
+        cache.jumpToCommitted(cached, bg, history, 4);
+        same();
+        DrawOperation redo1 = history.back();
+        history.pop_back();
+        cache.jumpToCommitted(cached, bg, history, 5);
+        same();
+        history.push_back(redo1);
+        cache.jumpToCommitted(cached, bg, history, 6);
+        same();
+        assert(cache.fullRebuilds() == 1 && cache.snapshotRestores() == 3);
+
+        // Drawing a different stroke after undo must not reuse the old branch's frame.
+        history.push_back(stroke(70.0, Color{37, 99, 235, 255}));
+        cache.appendCommitted(cached, bg, history, 7);
+        same();
+        history.pop_back();
+        cache.jumpToCommitted(cached, bg, history, 8);
+        same();
+        history.push_back(redo2);
+        cache.jumpToCommitted(cached, bg, history, 9);
+        same();
+        assert(cache.fullRebuilds() == 1);
+    }
+
+    std::cout << "All 48 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }

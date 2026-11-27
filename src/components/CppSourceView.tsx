@@ -68,7 +68,7 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
             </code>
           </h2>
           <span className="text-xs text-zinc-500">
-            Verified with g++ -std=c++11 -Wall -Wextra · 47/47 C++11 unit tests &amp; AlponaCLI passing
+            Verified with g++ -std=c++11 -Wall -Wextra · 48/48 C++11 unit tests &amp; AlponaCLI passing
           </span>
         </div>
 

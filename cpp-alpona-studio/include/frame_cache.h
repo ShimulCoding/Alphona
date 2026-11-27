@@ -34,6 +34,11 @@ public:
     void appendCommitted(CanvasBuffer& target, Color bgColor,
                          const std::vector<DrawOperation>& history, uint64_t historyRevision);
     int incrementalAppends() const { return incrementalAppends_; }
+    // Use for undo / redo: restores the stored frame of a recent history length when one
+    // exists, otherwise appends (history grew) or fully re-renders.
+    void jumpToCommitted(CanvasBuffer& target, Color bgColor,
+                         const std::vector<DrawOperation>& history, uint64_t historyRevision);
+    int snapshotRestores() const { return snapshotRestores_; }
 
     int cacheHits() const { return cacheHits_; }
     int fullRebuilds() const { return fullRebuilds_; }
@@ -50,6 +55,16 @@ private:
     int cacheHits_;
     int fullRebuilds_;
     int incrementalAppends_;
+    int snapshotRestores_;
+
+    // Frames of recent history lengths along the current undo/redo branch.
+    struct Snapshot {
+        size_t historySize;
+        uint64_t lastOpFingerprint;  // guards against a different branch of the same length
+        std::vector<uint8_t> pixels;
+    };
+    std::vector<Snapshot> snapshots_;
+    void storeSnapshot(const std::vector<DrawOperation>& history);
 };
 
 } // namespace alpona
