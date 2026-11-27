@@ -18,8 +18,9 @@ ifeq ($(OS),Windows_NT)
   # FreeGLUT 3.6.0 for 64-bit MinGW is bundled in third_party/freeglut (no install needed).
   GL_INC := -Ithird_party/freeglut/include
   GL_LIBS := -Lthird_party/freeglut/lib/x64 -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
-  # Static C/C++ runtime: the .exe also starts outside the MinGW/Code::Blocks console.
-  LDFLAGS += -static-libgcc -static-libstdc++
+  # Fully static MinGW runtime (libgcc, libstdc++, winpthread): the .exe starts outside the
+  # MinGW / Code::Blocks console. libfreeglut.a is an import library for libfreeglut.dll.
+  LDFLAGS += -static
   COPY_GLUT_DLL := copy /Y third_party\freeglut\bin\x64\libfreeglut.dll . >NUL
   APP_BIN := AlponaStudio.exe
   CLI_BIN := AlponaCLI.exe

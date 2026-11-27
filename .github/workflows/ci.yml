@@ -64,7 +64,7 @@ jobs:
           $units = $cbp.CodeBlocks_project_file.Project.Unit | ForEach-Object { $_.filename } | Where-Object { $_ -like 'src/*.cpp' }
           New-Item -ItemType Directory -Force -Path bin\Release | Out-Null
           g++ -O2 -std=c++11 -Iinclude -Ithird_party/freeglut/include @units -o bin/Release/AlponaStudio.exe `
-              -static-libgcc -static-libstdc++ -Lthird_party/freeglut/lib/x64 -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
+              -static -Lthird_party/freeglut/lib/x64 -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
           if ($LASTEXITCODE -ne 0) { throw 'Code::Blocks-equivalent build failed' }
           cmd /c copy /Y "third_party\freeglut\bin\x64\libfreeglut.dll" "bin\Release"
           $deps = objdump -p bin/Release/AlponaStudio.exe | Select-String 'DLL Name'

@@ -243,6 +243,6 @@ Alphona/
 | `npm install` fails | Check the internet connection. Then delete the `node_modules` folder and try again. |
 | Port 3000 is busy | Close the other program using it, or run `npx vite --port=3001 --open`. |
 | Browser shows an old version | Press `Ctrl+F5` to reload. |
-| Code::Blocks: `cannot find -lfreeglut` or `skipping incompatible libfreeglut.dll.a` | The bundled FreeGLUT is 64-bit: install the 64-bit Code::Blocks *mingw-setup* (the default download), and keep the `third_party` folder next to `AlponaStudio.cbp`. |
+| Code::Blocks: `cannot find -lfreeglut` or `skipping incompatible libfreeglut.a` | The bundled FreeGLUT is 64-bit: install the 64-bit Code::Blocks *mingw-setup* (the default download), and keep the `third_party` folder next to `AlponaStudio.cbp`. |
 | `libfreeglut.dll was not found` when starting the app | Copy `cpp-alpona-studio\third_party\freeglut\bin\x64\libfreeglut.dll` next to `AlponaStudio.exe` (the build normally does this). |
 | `make` is not recognized on Windows | Use `mingw32-make` (comes with Code::Blocks MinGW), or use Code::Blocks (B1). |

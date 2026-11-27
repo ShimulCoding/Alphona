@@ -18,8 +18,7 @@
 					<Add directory="third_party/freeglut/include" />
 				</Compiler>
 				<Linker>
-					<Add option="-static-libgcc" />
-					<Add option="-static-libstdc++" />
+					<Add option="-static" />
 					<Add directory="third_party/freeglut/lib/x64" />
 					<Add library="freeglut" />
 					<Add library="opengl32" />

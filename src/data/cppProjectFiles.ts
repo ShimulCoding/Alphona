@@ -851,9 +851,17 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     cycle: 66,
     title: "bundle FreeGLUT 3.6.0 for 64-bit MinGW so Code::Blocks F9 and mingw32-make build on Windows with no extra download",
     schedule: "fix(windows)",
-    scope: "The README FreeGLUT download site no longer exists (found by the Windows CI). FreeGLUT 3.6.0, built from the official source, now ships in third_party/freeglut; the Code::Blocks project, Makefile and launcher use it, and the C/C++ runtime is linked statically.",
+    scope: "The README FreeGLUT download site no longer exists (found by the Windows CI). FreeGLUT 3.6.0, built from the official source, now ships in third_party/freeglut; the Code::Blocks project, Makefile and launcher use it, and the C/C++…",
     authorHandle: "dipro20debnath",
     authorEmail: "diprodebnath200@gmail.com",
+  },
+  {
+    cycle: 67,
+    title: "link the Windows desktop app fully statically so AlponaStudio.exe needs no MinGW runtime DLLs",
+    schedule: "fix(windows)",
+    scope: "The Windows CI found that AlponaStudio.exe built with the posix-thread MinGW of Code::Blocks still needed libwinpthread-1.dll. The FreeGLUT import library is now libfreeglut.a and the Code::Blocks project and Makefile link with -static, so only Windows system DLLs and the bundled libfreeglut.dll are needed.",
+    authorHandle: "ShimulCoding",
+    authorEmail: "shimulc17@gmail.com",
   },
 ];
 

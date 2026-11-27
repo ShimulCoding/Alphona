@@ -5,7 +5,7 @@ Bundled so the Alpona Studio desktop app builds on Windows without any extra dow
 | Folder | Contents |
 | --- | --- |
 | `include/GL/` | FreeGLUT headers (`freeglut.h`, `glut.h`, …) |
-| `lib/x64/libfreeglut.dll.a` | MinGW import library (linked as `-lfreeglut`) |
+| `lib/x64/libfreeglut.a` | MinGW import library for `libfreeglut.dll` (linked as `-lfreeglut`; named `.a` so it also links with `-static`) |
 | `bin/x64/libfreeglut.dll` | Runtime DLL, copied next to `AlponaStudio.exe` by the build |
 
 - Source: official FreeGLUT 3.6.0 release, <https://sourceforge.net/projects/freeglut/files/freeglut/3.6.0/>
