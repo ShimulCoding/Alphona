@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildKolamMirrorGrid,
+  composeKolam,
+  gcd,
+  traceKolamLoops,
+  type KolamConfig,
+} from './kolamComposer';
+import {
   applyMat3,
   buildHomogeneousTransform2D,
   cohenSutherlandClip,
@@ -2068,4 +2075,88 @@ test('53. PDF-style Engine Documentation Guides (Quick Start & Advanced Techniqu
   assert.equal(stlMatches[0].stepNumber, '05');
 });
 
+test('54. Kolam / Pulli dot-grid mirror-curve composer: Lunda invariants, symmetry & C++11 parity', () => {
+  // No inner mirrors -> gcd(rows, cols) loops; all mirrors -> one loop per dot;
+  // every one of the 4*rows*cols segments is used exactly once.
+  for (let r = 2; r <= 12; r++) {
+    for (let c = 2; c <= 12; c++) {
+      const open = traceKolamLoops(buildKolamMirrorGrid(r, c, 0, 1, 'none'));
+      const full = traceKolamLoops(buildKolamMirrorGrid(r, c, 1, 1, 'none'));
+      assert.equal(open.loops.length, gcd(r, c));
+      assert.equal(full.loops.length, r * c);
+      const segs = open.loops.reduce((sum, loop) => sum + loop.length - 1, 0);
+      assert.equal(segs, 4 * r * c);
+      assert.equal(open.segmentCount, 4 * r * c);
+    }
+  }
 
+  const base: KolamConfig = {
+    rows: 5,
+    cols: 5,
+    mirrorDensity: 0.35,
+    seed: 7,
+    symmetry: 'none',
+    requireSingleLoop: false,
+    loopColors: ['#F8F4EC', '#DC2626'],
+    dotColor: '#F59E0B',
+    thickness: 3,
+    showDots: true,
+    smoothingIterations: 2,
+  };
+  // Seeded results shared with cpp-alpona-studio/tests/test_graphics.cpp (test 44).
+  const kNone = composeKolam(720, base);
+  assert.equal(kNone.loopCount, 2);
+  assert.equal(kNone.innerMirrorCount, 11);
+  const kMirror = composeKolam(720, { ...base, symmetry: 'mirror' });
+  assert.equal(kMirror.loopCount, 5);
+  assert.equal(kMirror.innerMirrorCount, 12);
+  const kRot = composeKolam(720, { ...base, symmetry: 'rotational' });
+  assert.equal(kRot.loopCount, 7);
+  assert.equal(kRot.innerMirrorCount, 16);
+
+  const sNone = composeKolam(720, { ...base, requireSingleLoop: true });
+  assert.ok(sNone.isSingleLoop);
+  assert.equal(sNone.seedUsed, 84);
+  assert.equal(sNone.attempts, 78);
+  const sMirror = composeKolam(720, { ...base, symmetry: 'mirror', requireSingleLoop: true });
+  assert.ok(sMirror.isSingleLoop);
+  assert.equal(sMirror.seedUsed, 20);
+  assert.equal(sMirror.attempts, 14);
+
+  // 1 loop + 25 pulli dots, as editable layers grouped 'Kolam' / 'Pulli Dots'
+  assert.equal(sMirror.operations.length, 26);
+  const loop = sMirror.operations[0];
+  assert.equal(loop.kind, 'freehand');
+  assert.equal(loop.group, 'Kolam');
+  if (loop.kind === 'freehand') {
+    assert.equal(loop.points.length, 401); // 100 corners x4 (two Chaikin passes) + closing point
+    assert.deepEqual(loop.points[0], loop.points[loop.points.length - 1]);
+    for (const p of loop.points) {
+      assert.ok(p.x > 0 && p.x < 720 && p.y > 0 && p.y < 720);
+    }
+  }
+  const dots = sMirror.operations.filter((op) => op.group === 'Pulli Dots');
+  assert.equal(dots.length, 25);
+  assert.equal(composeKolam(720, { ...base, showDots: false }).operations.length, kNone.loopCount);
+  // Multiple loops cycle through the loop colours
+  assert.equal(kNone.operations[0].color, '#F8F4EC');
+  assert.equal(kNone.operations[1].color, '#DC2626');
+
+  // 90-degree rotational symmetry on a square grid: V(x, y) == H(n-1-y, x)
+  const rot6 = buildKolamMirrorGrid(6, 6, 0.4, 11, 'rotational');
+  assert.equal(traceKolamLoops(rot6).loops.length, 16);
+  assert.equal(rot6.innerMirrorCount, 40);
+  for (let y = 0; y < 6; y++) {
+    for (let x = 1; x < 6; x++) {
+      assert.equal(rot6.vertical[y * 7 + x], rot6.horizontal[x * 6 + (5 - y)]);
+    }
+  }
+  // Left-right + top-bottom mirror symmetry
+  const mir = buildKolamMirrorGrid(7, 5, 0.5, 3, 'mirror');
+  for (let y = 0; y < 7; y++) {
+    for (let x = 0; x <= 5; x++) {
+      assert.equal(mir.vertical[y * 6 + x], mir.vertical[y * 6 + (5 - x)]);
+      assert.equal(mir.vertical[y * 6 + x], mir.vertical[(6 - y) * 6 + x]);
+    }
+  }
+});

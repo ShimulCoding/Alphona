@@ -36,6 +36,7 @@
 		<Unit filename="include/generative_composer.h" />
 		<Unit filename="include/homography.h" />
 		<Unit filename="include/image_processing.h" />
+		<Unit filename="include/kolam_composer.h" />
 		<Unit filename="include/layer_stack.h" />
 		<Unit filename="include/layer_transform.h" />
 		<Unit filename="include/motifs.h" />
@@ -64,6 +65,7 @@
 		<Unit filename="src/generative_composer.cpp" />
 		<Unit filename="src/homography.cpp" />
 		<Unit filename="src/image_processing.cpp" />
+		<Unit filename="src/kolam_composer.cpp" />
 		<Unit filename="src/layer_stack.cpp" />
 		<Unit filename="src/layer_transform.cpp" />
 		<Unit filename="src/main.cpp" />

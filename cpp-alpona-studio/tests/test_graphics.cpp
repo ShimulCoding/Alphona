@@ -9,6 +9,7 @@
 #include "../include/generative_composer.h"
 #include "../include/homography.h"
 #include "../include/image_processing.h"
+#include "../include/kolam_composer.h"
 #include "../include/layer_stack.h"
 #include "../include/layer_transform.h"
 #include "../include/motifs.h"
@@ -963,6 +964,66 @@ int main() {
         assert(sSkipped.isComplete == true && sSkipped.progressPct == 100);
     }
 
-    std::cout << "All 43 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
+    // 44. Kolam / Pulli Dot-Grid Mirror-Curve Composer (TS parity: kolamComposer.ts)
+    {
+        // Lunda invariants: no inner mirrors -> gcd(rows, cols) loops; all mirrors -> one
+        // loop per dot; every one of the 4*rows*cols segments is used exactly once.
+        for (int r = 2; r <= 12; ++r) {
+            for (int c = 2; c <= 12; ++c) {
+                KolamTraceResult open = traceKolamLoops(buildKolamMirrorGrid(r, c, 0.0, 1u, KolamSymmetry::None));
+                KolamTraceResult full = traceKolamLoops(buildKolamMirrorGrid(r, c, 1.0, 1u, KolamSymmetry::None));
+                assert(static_cast<int>(open.loops.size()) == gcdInt(r, c));
+                assert(static_cast<int>(full.loops.size()) == r * c);
+                size_t segs = 0;
+                for (size_t i = 0; i < open.loops.size(); ++i) segs += open.loops[i].size() - 1;
+                assert(static_cast<int>(segs) == 4 * r * c && open.segmentCount == 4 * r * c);
+            }
+        }
+
+        // Seeded results must match the TypeScript engine bit for bit.
+        KolamConfig cfg;
+        cfg.rows = 5; cfg.cols = 5; cfg.mirrorDensity = 0.35; cfg.seed = 7u;
+        cfg.requireSingleLoop = false;
+        cfg.symmetry = KolamSymmetry::None;
+        KolamComposeResult kNone = composeKolam(720, cfg);
+        assert(kNone.loopCount == 2 && kNone.innerMirrorCount == 11);
+        cfg.symmetry = KolamSymmetry::Mirror;
+        KolamComposeResult kMirror = composeKolam(720, cfg);
+        assert(kMirror.loopCount == 5 && kMirror.innerMirrorCount == 12);
+        cfg.symmetry = KolamSymmetry::Rotational;
+        KolamComposeResult kRot = composeKolam(720, cfg);
+        assert(kRot.loopCount == 7 && kRot.innerMirrorCount == 16);
+
+        cfg.requireSingleLoop = true;
+        cfg.symmetry = KolamSymmetry::None;
+        KolamComposeResult sNone = composeKolam(720, cfg);
+        assert(sNone.isSingleLoop && sNone.seedUsed == 84u && sNone.attempts == 78);
+        cfg.symmetry = KolamSymmetry::Mirror;
+        KolamComposeResult sMirror = composeKolam(720, cfg);
+        assert(sMirror.isSingleLoop && sMirror.seedUsed == 20u && sMirror.attempts == 14);
+        assert(sMirror.dotCenters.size() == 25 && sMirror.canvasLoops.size() == 1);
+        // 100 lattice segments -> 100 corners, x4 after two Chaikin passes, + closing point
+        assert(sMirror.canvasLoops[0].size() == 401);
+
+        KolamMirrorGrid rot6 = buildKolamMirrorGrid(6, 6, 0.4, 11u, KolamSymmetry::Rotational);
+        assert(traceKolamLoops(rot6).loops.size() == 16 && rot6.innerMirrorCount == 40);
+        // 90 degree rotational symmetry: V(x, y) mirrors H(n-1-y, x)
+        for (int y = 0; y < 6; ++y)
+            for (int x = 1; x < 6; ++x)
+                assert(rot6.vertical[y * 7 + x] == rot6.horizontal[x * 6 + (5 - y)]);
+
+        // Kolam renders through the normal operation pipeline (freehand loops + dots).
+        std::vector<DrawOperation> kOps = buildKolamDrawOperations(
+            sMirror, Color{248, 244, 236, 255}, Color{245, 158, 11, 255}, 3);
+        assert(kOps.size() == 26);
+        CanvasBuffer kBuf(720, 720);
+        kBuf.clear(Color{22, 22, 27, 255});
+        for (size_t i = 0; i < kOps.size(); ++i) executeOperation(kBuf, kOps[i]);
+        const Point2D firstDot = sMirror.dotCenters[0];
+        assert(kBuf.getPixel(static_cast<int>(firstDot.x), static_cast<int>(firstDot.y)) ==
+               (Color{245, 158, 11, 255}));
+    }
+
+    std::cout << "All 44 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }
