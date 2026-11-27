@@ -22,6 +22,7 @@
 #include <GL/freeglut.h>
 #endif
 
+#include <cstdlib>
 #include "../include/canvas_assist.h"
 #include "../include/canvas_buffer.h"
 #include "../include/desktop_gui.h"
@@ -271,7 +272,7 @@ void drawStudioChrome() {
              {82, 82, 91, 255});
     drawText(22, 692, "Keys: [F] Brush [L] Line [O] Circle", {113, 113, 122, 255});
     drawText(22, 710, "[B] Fill [U] Undo [S] PNG [V] SVG", {113, 113, 122, 255});
-    drawText(22, 728, "[T] 3D STL [1-4] Views [ESC] Exit", {113, 113, 122, 255});
+    drawText(22, 728, "[T] 3D STL [ESC] Exit", {113, 113, 122, 255});
 
     // 4. Render All Interactive Buttons
     for (size_t i = 0; i < gGuiButtons.size(); ++i) {
@@ -801,7 +802,11 @@ void keyboardCallback(unsigned char key, int, int) {
         case 'v': case 'V': executeGuiButtonAction(DesktopButtonId::ExportSvg); break;
         case 't': case 'T': executeGuiButtonAction(DesktopButtonId::ExportStl); break;
         case 27: // ESC
+#ifdef __APPLE__
+            std::exit(0);  // Apple GLUT has no glutLeaveMainLoop()
+#else
             glutLeaveMainLoop();
+#endif
             return;
         default:
             return;

@@ -1,39 +1,52 @@
 @echo off
-title Alpona Studio Pro (v1.4.2) - C++11 OpenGL Desktop ^& CLI Launcher
-echo ============================================================================
-echo   Alpona Studio Pro (v1.4.2) - C++11 Desktop ^& CLI Suite
-echo   Directory: cpp-alpona-studio\
-echo ============================================================================
-echo.
-
+setlocal
+title Alpona Studio - C++11 Desktop App and CLI Launcher
 cd /d "%~dp0cpp-alpona-studio"
 
+echo ============================================================
+echo   Alpona Studio - C++11 OpenGL / FreeGLUT Desktop App
+echo ============================================================
+echo.
+
+rem --- 1. If the desktop app is already built, just start it ---------------
+if exist "bin\Release\AlponaStudio.exe" (
+  echo [READY] Starting bin\Release\AlponaStudio.exe ^(built by Code::Blocks^)
+  start "" /d "%CD%" "bin\Release\AlponaStudio.exe"
+  exit /b 0
+)
 if exist "AlponaStudio.exe" (
-  echo [READY] Found compiled AlponaStudio.exe — Launching OpenGL Desktop Studio...
-  start "" "AlponaStudio.exe"
+  echo [READY] Starting AlponaStudio.exe ^(built by mingw32-make^)
+  start "" /d "%CD%" "AlponaStudio.exe"
   exit /b 0
 )
 
-echo [INFO] To compile and run the interactive C++11 OpenGL Desktop Studio on Windows:
-echo   1. Open "cpp-alpona-studio\AlponaStudio.cbp" in Code::Blocks IDE (MinGW + FreeGLUT).
-echo   2. Press F9 (Build and Run).
-echo.
-
-where g++ >nul 2>nul
-if %errorlevel% equ 0 (
-  echo [BUILD] g++ compiler detected! Building standalone C++11 Headless CLI ^(AlponaCLI.exe^)...
-  g++ -std=c++11 -O2 -Iinclude src/cli_pipeline.cpp src/transforms.cpp src/rasterizer.cpp src/floodfill.cpp src/motifs.cpp src/image_processing.cpp src/projection3d.cpp src/bezier.cpp src/homography.cpp src/photo_unwarper.cpp src/phong_lighting.cpp src/projector_trace.cpp src/timelapse_frames.cpp src/frieze_border.cpp src/stencil_bridger.cpp src/colorway_remap.cpp src/stroke_craft.cpp src/stl_stamp.cpp src/weave_chart.cpp src/generative_composer.cpp src/natural_media.cpp src/canvas_assist.cpp src/layer_stack.cpp src/layer_transform.cpp src/viewport_camera.cpp src/frame_cache.cpp src/desktop_gui.cpp -o AlponaCLI.exe
-  if %errorlevel% equ 0 (
-    echo [SUCCESS] Built AlponaCLI.exe! Running sample Padma export pipeline...
+rem --- 2. Not built yet: try to build it with MinGW make ------------------
+where mingw32-make >nul 2>nul
+if not errorlevel 1 (
+  echo [BUILD] Building the desktop app with mingw32-make ^(needs FreeGLUT installed in MinGW^)...
+  mingw32-make
+  if exist "AlponaStudio.exe" (
+    echo [SUCCESS] Built AlponaStudio.exe - starting it now.
+    start "" /d "%CD%" "AlponaStudio.exe"
+    exit /b 0
+  )
+  echo [INFO] Desktop build failed - FreeGLUT is probably not installed. See README.md, section "Part B".
+  echo.
+  echo [BUILD] Building the command-line tool AlponaCLI.exe instead ^(no OpenGL needed^)...
+  mingw32-make cli
+  if exist "AlponaCLI.exe" (
     AlponaCLI.exe --motif padma --export-png padma.png --export-svg padma.svg --export-stl padma_pitha.stl --mode pitha
     echo.
-    echo Generated padma.png, padma.svg, and padma_pitha.stl in cpp-alpona-studio\!
+    echo [SUCCESS] Created padma.png, padma.svg and padma_pitha.stl in the cpp-alpona-studio folder.
   )
+  echo.
 )
 
-if exist "AlponaStudio.cbp" (
-  echo.
-  echo Opening AlponaStudio.cbp in Code::Blocks...
-  start "" "AlponaStudio.cbp"
-)
+rem --- 3. Otherwise open the Code::Blocks project ----------------------------
+echo To build the desktop app in Code::Blocks:
+echo   1. Code::Blocks will open AlponaStudio.cbp now ^(if Code::Blocks is installed^).
+echo   2. Press F9 ^(Build and run^).
+echo   3. Next time, double-click this file again and it will start the built app directly.
+echo.
+if exist "AlponaStudio.cbp" start "" "AlponaStudio.cbp"
 pause

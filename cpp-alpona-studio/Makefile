@@ -15,12 +15,25 @@ ifeq ($(OS),Windows_NT)
   APP_BIN := AlponaStudio.exe
   CLI_BIN := AlponaCLI.exe
   TEST_BIN := test_graphics.exe
+  RUN_TEST := $(TEST_BIN)
+  RM := del /Q /F
 else
-  GL_LIBS := -lglut -lGL -lGLU
+  UNAME_S := $(shell uname -s)
+  ifeq ($(UNAME_S),Darwin)
+    # macOS: uses Apple's built-in GLUT and OpenGL frameworks
+    CXXFLAGS += -DGL_SILENCE_DEPRECATION
+    GL_LIBS := -framework GLUT -framework OpenGL
+  else
+    GL_LIBS := -lglut -lGL -lGLU
+  endif
   APP_BIN := AlponaStudio
   CLI_BIN := AlponaCLI
   TEST_BIN := test_graphics
+  RUN_TEST := ./$(TEST_BIN)
+  RM := rm -f
 endif
+
+.PHONY: all cli test clean
 
 all: $(APP_BIN)
 
@@ -34,7 +47,7 @@ $(CLI_BIN): src/cli_pipeline.cpp $(CORE_SRC)
 
 test: tests/test_graphics.cpp $(CORE_SRC)
 	$(CXX) $(CXXFLAGS) tests/test_graphics.cpp $(CORE_SRC) -o $(TEST_BIN)
-	./$(TEST_BIN)
+	$(RUN_TEST)
 
 clean:
-	rm -f $(APP_BIN) $(CLI_BIN) $(TEST_BIN)
+	-$(RM) $(APP_BIN) $(CLI_BIN) $(TEST_BIN)
