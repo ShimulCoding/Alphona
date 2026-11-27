@@ -77,6 +77,7 @@ import {
   ULTRA_HD_EXPORT_SIZE,
 } from './graphics/highResExport';
 import { composeProceduralAlpona } from './graphics/generativeComposer';
+import { composeKolam, type KolamSymmetry } from './graphics/kolamComposer';
 import { ALPONA_MOTIFS } from './graphics/motifs';
 import {
   parseAlponaProject,
@@ -85,6 +86,7 @@ import {
 import { downloadAlponaSvg, generateAlponaSvg } from './graphics/svgExport';
 import { exportAlponaTimelapseReel } from './graphics/videoReelExport';
 import {
+  ALPONA_PALETTE,
   CANVAS_SURFACES,
   DEFAULT_TRANSFORM_2D,
   type CanvasSurfaceId,
@@ -942,6 +944,62 @@ export default function App() {
     [color, symmetry.sectors, thickness, mutateOperationsWithHistory]
   );
 
+  const handleComposeKolam = useCallback(
+    (opts: {
+      rows: number;
+      cols: number;
+      symmetry: KolamSymmetry;
+      mirrorDensity: number;
+      seed: number;
+      requireSingleLoop: boolean;
+      showDots: boolean;
+      colorEachLoop: boolean;
+      append: boolean;
+    }) => {
+      setIsReplaying(false);
+      const accentHex =
+        color.toLowerCase() === '#f59e0b' ? '#DC2626' : '#F59E0B';
+      // Colour each loop differently (skipping pigments that vanish on the current floor).
+      const hiddenOnSurface = surface.isDark ? '#18181b' : '#faf8f2';
+      const loopColors = opts.colorEachLoop
+        ? [
+            color,
+            ...ALPONA_PALETTE.map((swatch) => swatch.hex).filter(
+              (hex) =>
+                hex.toLowerCase() !== color.toLowerCase() &&
+                hex.toLowerCase() !== hiddenOnSurface
+            ),
+          ]
+        : [color];
+      const composed = composeKolam(CANVAS_SIZE, {
+        rows: opts.rows,
+        cols: opts.cols,
+        mirrorDensity: opts.mirrorDensity,
+        seed: opts.seed,
+        symmetry: opts.symmetry,
+        requireSingleLoop: opts.requireSingleLoop,
+        loopColors,
+        dotColor: accentHex,
+        thickness,
+        showDots: opts.showDots,
+        smoothingIterations: 2,
+      });
+      mutateOperationsWithHistory((prev) =>
+        opts.append ? [...prev, ...composed.operations] : composed.operations
+      );
+      setActiveMotifId(null);
+      const loopText = composed.isSingleLoop
+        ? 'one continuous stroke'
+        : `${composed.loopCount} loops`;
+      setExportNotice(
+        `Drew ${composed.rows}×${composed.cols} kolam: ${loopText}, ${composed.innerMirrorCount} mirrors (seed #${composed.seedUsed}).`
+      );
+      setTimeout(() => setExportNotice(null), 3200);
+      return composed;
+    },
+    [color, surface.isDark, thickness, mutateOperationsWithHistory]
+  );
+
   const handleExportPng = useCallback(() => {
     const hiResCanvas = renderUltraHdAlponaCanvas(
       operations,
@@ -1277,6 +1335,7 @@ export default function App() {
                 onApplyColorway={handleApplyColorway}
                 onExtractPhotoColorway={handleExtractPhotoColorway}
                 onComposeProcedural={handleComposeProcedural}
+                onComposeKolam={handleComposeKolam}
                 operations={operations}
                 onToggleLayerVisibility={handleToggleLayerVisibility}
                 onToggleLayerLock={handleToggleLayerLock}

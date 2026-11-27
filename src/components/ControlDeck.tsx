@@ -4,6 +4,7 @@ import {
   Eraser,
   FlipHorizontal2,
   FlipVertical2,
+  Grid3x3,
   Hexagon,
   ImagePlus,
   Layers,
@@ -22,6 +23,13 @@ import {
 import { BENGALI_BEZIER_STAMPS } from '../graphics/bezier';
 import { analyzeHexColor } from '../graphics/colorModels';
 import { FESTIVAL_COLORWAYS } from '../graphics/colorwayRemap';
+import {
+  KOLAM_MAX_DOTS,
+  KOLAM_MIN_DOTS,
+  clampKolamDots,
+  type KolamComposeResult,
+  type KolamSymmetry,
+} from '../graphics/kolamComposer';
 import {
   getLayerGroupAccent,
   type ReferenceUnderlayConfig,
@@ -104,6 +112,17 @@ interface ControlDeckProps {
     includeLSystemVine: boolean;
     append: boolean;
   }) => void;
+  onComposeKolam: (opts: {
+    rows: number;
+    cols: number;
+    symmetry: KolamSymmetry;
+    mirrorDensity: number;
+    seed: number;
+    requireSingleLoop: boolean;
+    showDots: boolean;
+    colorEachLoop: boolean;
+    append: boolean;
+  }) => KolamComposeResult;
   operations: DrawOperation[];
   onToggleLayerVisibility: (id: string) => void;
   onToggleLayerLock: (id: string) => void;
@@ -170,6 +189,7 @@ export function ControlDeck({
   onApplyColorway,
   onExtractPhotoColorway,
   onComposeProcedural,
+  onComposeKolam,
   operations,
   onToggleLayerVisibility,
   onToggleLayerLock,
@@ -192,6 +212,15 @@ export function ControlDeck({
   const [includePhyllotaxis, setIncludePhyllotaxis] = useState(true);
   const [includeRhodonea, setIncludeRhodonea] = useState(true);
   const [includeLSystemVine, setIncludeLSystemVine] = useState(true);
+  const [kolamRows, setKolamRows] = useState(7);
+  const [kolamCols, setKolamCols] = useState(7);
+  const [kolamSymmetry, setKolamSymmetry] = useState<KolamSymmetry>('mirror');
+  const [kolamDensity, setKolamDensity] = useState(35);
+  const [kolamSeed, setKolamSeed] = useState(7);
+  const [kolamSingleLoop, setKolamSingleLoop] = useState(true);
+  const [kolamShowDots, setKolamShowDots] = useState(true);
+  const [kolamColorLoops, setKolamColorLoops] = useState(false);
+  const [kolamResult, setKolamResult] = useState<KolamComposeResult | null>(null);
 
   const tools: Array<{
     id: DrawingTool;
@@ -1196,6 +1225,211 @@ export function ControlDeck({
                   + Add Ring
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Kolam / Pulli Dot-Grid Composer (mirror-curve algorithm) */}
+          <div className="p-5" data-testid="kolam-composer">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="text-sm font-semibold text-zinc-900">
+                Kolam Dot Grid
+              </h2>
+              <span className="font-mono text-[11px] text-zinc-500">
+                Pulli · Mirror curves
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ['kolam-rows', 'Rows', kolamRows, setKolamRows],
+                    ['kolam-cols', 'Columns', kolamCols, setKolamCols],
+                  ] as const
+                ).map(([id, label, value, setValue]) => (
+                  <label key={id} htmlFor={id} className="space-y-1">
+                    <span className="flex items-baseline justify-between text-xs font-medium text-zinc-600">
+                      {label}
+                      <span className="font-mono tabular-nums text-zinc-900">
+                        {value} dots
+                      </span>
+                    </span>
+                    <input
+                      id={id}
+                      type="range"
+                      min={KOLAM_MIN_DOTS}
+                      max={KOLAM_MAX_DOTS}
+                      value={value}
+                      onChange={(e) => setValue(clampKolamDots(Number(e.target.value)))}
+                      className="w-full accent-[#B91C1C]"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div>
+                <span className="mb-1 block text-xs font-medium text-zinc-600">
+                  Symmetry
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      ['none', 'Free'],
+                      ['mirror', 'Mirror'],
+                      ['rotational', 'Rotate'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setKolamSymmetry(id)}
+                      aria-pressed={kolamSymmetry === id}
+                      className={`h-8 rounded border text-xs font-medium transition-colors ${
+                        kolamSymmetry === id
+                          ? 'border-zinc-900 bg-zinc-900 text-white'
+                          : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <label htmlFor="kolam-density" className="block space-y-1">
+                <span className="flex items-baseline justify-between text-xs font-medium text-zinc-600">
+                  Mirror density
+                  <span className="font-mono tabular-nums text-zinc-900">
+                    {kolamDensity}%
+                  </span>
+                </span>
+                <input
+                  id="kolam-density"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={kolamDensity}
+                  onChange={(e) => setKolamDensity(Number(e.target.value))}
+                  className="w-full accent-[#B91C1C]"
+                />
+              </label>
+
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="kolam-seed-input"
+                  className="text-xs font-medium text-zinc-600 shrink-0"
+                >
+                  Seed
+                </label>
+                <input
+                  id="kolam-seed-input"
+                  type="number"
+                  min={1}
+                  max={999999}
+                  value={kolamSeed}
+                  onChange={(e) =>
+                    setKolamSeed(Math.max(1, Number(e.target.value) || 1))
+                  }
+                  className="h-8 w-full rounded border border-zinc-300 bg-white px-2.5 font-mono text-xs tabular-nums text-zinc-900 focus:border-[#B91C1C] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setKolamSeed(
+                      (prev) =>
+                        (((prev * 1103515245 + 12345) >>> 16) % 9000) + 1000
+                    )
+                  }
+                  aria-label="Next kolam seed"
+                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded border border-zinc-300 bg-white px-2.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Next</span>
+                </button>
+              </div>
+
+              <div className="space-y-1.5">
+                {(
+                  [
+                    [kolamSingleLoop, setKolamSingleLoop, 'One continuous stroke (single loop)'],
+                    [kolamShowDots, setKolamShowDots, 'Show pulli dots'],
+                    [kolamColorLoops, setKolamColorLoops, 'Colour each loop differently'],
+                  ] as const
+                ).map(([checked, setChecked, label]) => (
+                  <label
+                    key={label}
+                    className="flex cursor-pointer items-center gap-2 text-xs text-zinc-700"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => setChecked(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 accent-[#B91C1C]"
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {([false, true] as const).map((append) => (
+                  <button
+                    key={append ? 'add' : 'draw'}
+                    type="button"
+                    onClick={() => {
+                      const result = onComposeKolam({
+                        rows: kolamRows,
+                        cols: kolamCols,
+                        symmetry: kolamSymmetry,
+                        mirrorDensity: kolamDensity / 100,
+                        seed: kolamSeed,
+                        requireSingleLoop: kolamSingleLoop,
+                        showDots: kolamShowDots,
+                        colorEachLoop: kolamColorLoops,
+                        append,
+                      });
+                      setKolamResult(result);
+                      setKolamSeed(result.seedUsed);
+                    }}
+                    className={
+                      append
+                        ? 'inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 bg-white px-3 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50'
+                        : 'inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#B91C1C] px-3 text-xs font-medium text-white transition-colors hover:bg-[#991B1B]'
+                    }
+                  >
+                    {append ? (
+                      '+ Add on Top'
+                    ) : (
+                      <>
+                        <Grid3x3 className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Draw Kolam</span>
+                      </>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {kolamResult && (
+                <p
+                  className="rounded border border-zinc-200 bg-zinc-50 px-2.5 py-2 font-mono text-[11px] leading-relaxed text-zinc-600"
+                  data-testid="kolam-result"
+                >
+                  {kolamResult.rows}×{kolamResult.cols} dots ·{' '}
+                  {kolamResult.isSingleLoop
+                    ? '1 loop (one stroke)'
+                    : `${kolamResult.loopCount} loops`}{' '}
+                  · {kolamResult.segmentCount} segments ·{' '}
+                  {kolamResult.innerMirrorCount} mirrors · seed #
+                  {kolamResult.seedUsed}
+                  {kolamSingleLoop && !kolamResult.isSingleLoop && (
+                    <span className="block text-[#B91C1C]">
+                      No one-stroke layout found in {kolamResult.attempts} tries —
+                      change the size, symmetry or density.
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </div>
 

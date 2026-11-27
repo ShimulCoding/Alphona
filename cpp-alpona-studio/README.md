@@ -8,7 +8,7 @@ share the same engine sources in `src/` and `include/`:
 | --- | --- | --- | --- |
 | **AlponaStudio** — interactive desktop app (1000×796 window, 37 buttons) | `src/main.cpp` | Code::Blocks **F9**, or `make` | Yes (FreeGLUT) |
 | **AlponaCLI** — headless exporter (PNG, SVG, STL, CSV…) | `src/cli_pipeline.cpp` | `make cli` | No |
-| **test_graphics** — 43 automated tests | `tests/test_graphics.cpp` | `make test` | No |
+| **test_graphics** — 44 automated tests | `tests/test_graphics.cpp` | `make test` | No |
 
 On Windows, `make` is called **`mingw32-make`** (it comes with Code::Blocks' MinGW) and the programs end in `.exe`.
 
@@ -34,7 +34,8 @@ and a **left dock** with Quick-Start Templates (Padma Lotus, Boishakhi Sun, Kalk
 Artisan Pigments (Ivory, Sindoor, Turmeric, Alta, Pata, Neel), Courtyard Surface (Courtyard, Red Clay,
 Midnight), Symmetry & Assist (4×, 6×, 8×, 12×, Mirror Dₙ/Cₙ, Magnetic Snap, Guide Axes), Canvas Zoom
 (Zoom −, 100%, Zoom +) and Workspace Views (**2D Studio, Image Lab NPR, 3D Courtyard, Night Diya 3D**).
-Draw by dragging on the canvas; every stroke is repeated around the centre.
+Draw by dragging on the canvas; every stroke is repeated around the centre. Press **`K`** to draw a
+7×7 pulli kolam with one continuous stroke (each press shows the next design).
 
 | Key | Action | Key | Action |
 | --- | --- | --- | --- |
@@ -42,7 +43,8 @@ Draw by dragging on the canvas; every stroke is repeated around the centre.
 | `U` / `Y` / `C` | Undo / Redo / Clear | `R` | Mirror (Dₙ) ↔ rotation (Cₙ) |
 | `M` / `N` | Padma Lotus / Boishakhi Sun template | `A` / `X` | Guide axes / Magnetic snap |
 | `q` `w` `e` `d` `z` | Ivory, Sindoor, Turmeric, Pata, Neel | `+` `-` `0` | Zoom in / out / 100% |
-| `S` / `V` / `T` | Save PNG / SVG / 3D STL | `Esc` | Exit |
+| `S` / `V` / `T` | Save PNG / SVG / 3D STL | `K` | Pulli kolam (next design on each press) |
+| `Esc` | Exit | | |
 
 Exports are written to the current folder as `alpona_export_N.png`, `alpona_vector_N.svg` and
 `alpona_pitha_mold_N.stl` (an STL can be opened in any 3D viewer, e.g. Windows *3D Viewer*).
@@ -50,13 +52,14 @@ Exports are written to the current folder as `alpona_export_N.png`, `alpona_vect
 ## 4. Tests and AlponaCLI
 
 ```bash
-make test        # expected: All 43 C++11 Alpona Studio v1.4.2 tests passed!
+make test        # expected: All 44 C++11 Alpona Studio v1.4.2 tests passed!
 make cli
 ./AlponaCLI --help
 ./AlponaCLI --motif padma --export-png padma.png --export-svg padma.svg \
             --export-stl padma_pitha.stl --mode pitha --export-weave padma_loom.csv \
             --export-stencil padma_stencil.png
 ./AlponaCLI --procedural 42 --sectors 12 --export-png vine.png --export-natural vine_chalk.png
+./AlponaCLI --kolam 7x7 --kolam-symmetry rotational --export-png kolam.png --export-svg kolam.svg
 ```
 
 | Option | Meaning |
@@ -64,6 +67,9 @@ make cli
 | `--motif <padma\|boishakhi\|kalka\|chowk>` | Start from a traditional motif (default `padma`) |
 | `--procedural <seed>` / `--sectors <4..16>` | Generate an L-system + phyllotaxis alpona instead |
 | `--size <px>` | Canvas size (default 512) |
+| `--kolam <rows>x<cols>` | Draw a pulli dot-grid kolam (2..12 dots each way) instead of a motif |
+| `--kolam-symmetry <none\|mirror\|rotational>` / `--kolam-density <0..1>` / `--kolam-seed <n>` | Kolam mirror layout; the seed search stops at the first one-stroke design |
+| `--kolam-loops` | Keep the given seed even if the kolam has several loops |
 | `--export-png` / `--export-svg` | Raster PNG / vector SVG |
 | `--export-stl <file> --mode <woodblock\|pitha\|coaster>` | 3D-printable relief mold (binary STL) |
 | `--export-weave` | Jamdani / Nakshi Kantha weave chart (CSV) |
@@ -83,3 +89,4 @@ make cli
 | `image_processing`, `photo_unwarper`, `homography`, `projector_trace` | Histogram, filters, FFT, morphology, homography |
 | `stencil_bridger`, `stl_stamp`, `weave_chart`, `frieze_border`, `colorway_remap` | Stencils, STL export, weave charts, frieze groups, K-means colours |
 | `generative_composer`, `motifs`, `timelapse_frames`, `desktop_gui` | L-systems & phyllotaxis, motifs, timelapse, desktop GUI layout |
+| `kolam_composer` | Pulli dot-grid kolam: mirror-curve tracing, symmetric mirror placement, one-stroke search |

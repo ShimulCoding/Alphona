@@ -35,7 +35,7 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-zinc-200 pb-6">
         <div className="max-w-2xl space-y-2">
           <h1 className="font-display text-3xl font-semibold tracking-tight text-zinc-950">
-            C++11 OpenGL Desktop GUI, Headless CLI &amp; 68-Cycle Alternating Git Workflow
+            C++11 OpenGL Desktop GUI, Headless CLI &amp; {GIT_COMMIT_CYCLES.length}-Cycle Alternating Git Workflow
           </h1>
           <p className="text-sm leading-relaxed text-zinc-600">
             Complete C++11 / OpenGL / FreeGLUT point-and-click desktop studio application plus the
@@ -45,7 +45,8 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
             Categories, Group-Select Tool, Porter-Duff Per-Layer Opacity &amp; Lock,
             Stylus Pressure, Multi-Touch Gestures, IndexedDB Projects Gallery,
             2× Retina Preview, 3D .STL Pitha Molds, Jamdani Weave Charts, L-System
-            Composer, and Natural Media NPR — packaged as 68 modular alternating
+            Composer, Pulli Kolam Dot-Grid Composer, and Natural Media NPR — packaged as{' '}
+            {GIT_COMMIT_CYCLES.length} modular alternating
             milestone commits for{' '}
             <span className="font-mono text-zinc-900">
               ShimulCoding/Alphona
@@ -72,7 +73,7 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
             </code>
           </h2>
           <span className="text-xs text-zinc-500">
-            Verified with g++ -std=c++11 -Wall -Wextra · 43/43 C++11 unit tests &amp; AlponaCLI passing
+            Verified with g++ -std=c++11 -Wall -Wextra · 44/44 C++11 unit tests &amp; AlponaCLI passing
           </span>
         </div>
 
@@ -149,18 +150,18 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold text-zinc-900">
-              68-Cycle Alternating Git Commit &amp; Push Workflow{' '}
+              {GIT_COMMIT_CYCLES.length}-Cycle Alternating Git Commit &amp; Push Workflow{' '}
               <code className="font-mono text-sm font-normal text-zinc-500">
                 ShimulCoding/Alphona
               </code>
             </h2>
             <p className="mt-1 text-xs text-zinc-600">
               Structured modular milestone commits attributing pair-programmed
-              subsystems evenly — Odd cycles (1, 3, 5, …, 65, 67):{' '}
+              subsystems evenly — Odd cycles (1, 3, 5, …):{' '}
               <span className="font-mono text-zinc-900">
                 ShimulCoding &lt;shimulc17@gmail.com&gt;
               </span>{' '}
-              · Even cycles (2, 4, 6, …, 66, 68):{' '}
+              · Even cycles (2, 4, 6, …):{' '}
               <span className="font-mono text-zinc-900">
                 dipro20debnath &lt;diprodebnath200@gmail.com&gt;
               </span>
@@ -193,7 +194,7 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
           </div>
         </div>
 
-        {/* Commit Cycles Timeline (2x5 balanced grid for 10 alternating cycles) */}
+        {/* Commit Cycles Timeline (one card per real git commit cycle) */}
         <div className="grid gap-3 sm:grid-cols-2">
           {GIT_COMMIT_CYCLES.map((cycle) => {
             const isShimul = cycle.authorHandle === 'ShimulCoding';

@@ -11,7 +11,8 @@
 
 Alpona Studio is a design studio for **alpona** — the traditional Bengali floor art drawn with rice paste for
 Pohela Boishakh, Ekushey February and pujas. Every stroke is mirrored around a centre point (radial symmetry),
-so a few strokes become a complete alpona. All graphics algorithms (Bresenham, midpoint circle, seed fill,
+so a few strokes become a complete alpona, and a dot-grid **kolam composer** turns rows of pulli dots
+into one-stroke kolam designs. All graphics algorithms (Bresenham, midpoint circle, seed fill,
 clipping, 2D/3D transformations, projection, Z-buffer, Phong lighting, FFT, morphology…) are implemented
 from scratch, **twice**: once in **TypeScript** for the web studio and once in **C++11** for the desktop
 app and command-line tool, and both versions are covered by automated tests.
@@ -22,7 +23,7 @@ The project contains **two programs**. You can run either one, or both:
 | --- | --- | --- | --- |
 | **Part A** | **Web Studio** (the full app, all features) | Node.js | ~3 minutes |
 | **Part B** | **C++11 Desktop App** (OpenGL / FreeGLUT) + **AlponaCLI** | Code::Blocks (MinGW) + FreeGLUT | ~10 minutes |
-| **Part C** | Automated tests (53 TypeScript + 43 C++11) | Node.js, g++ | ~1 minute |
+| **Part C** | Automated tests (54 TypeScript + 44 C++11) | Node.js, g++ | ~1 minute |
 
 ---
 
@@ -69,7 +70,7 @@ No API keys, accounts or `.env` file are needed. After the first install, the ap
 
 ### A3. Guided tour — try every feature (follows the demo video)
 
-Each step says what to click and what you should see. Steps 1–6 take about 5 minutes.
+Each step says what to click and what you should see. Steps 1–7 take about 5 minutes.
 
 **Studio (the drawing page)**
 
@@ -87,36 +88,43 @@ Each step says what to click and what you should see. Steps 1–6 take about 5 m
    bring forward / send backward, and colour-coded groups.
    **Craft tab:** procedural *Compose Alpona* (L-system vines, phyllotaxis, rhodonea petals),
    2D transformation matrix (scale, shear, shift) and the clipping window.
-6. **Zoom & snap** (bar above the canvas): zoom −/+, **Pan**, **1× 720 ↔ 2× HD** preview,
+6. **Kolam Dot Grid** (Craft tab, below *Procedural Composer*): choose rows × columns of pulli dots
+   (2–12), a symmetry (**Free / Mirror / Rotate**) and the mirror density, then click **Draw Kolam**.
+   The result line shows how many loops were traced — with *One continuous stroke* ticked it searches
+   seeds until the whole kolam is **one single line**. Tick *Colour each loop differently* and untick
+   *One continuous stroke* to see every separate loop in its own colour. **Next** gives a new design,
+   **+ Add on Top** layers a kolam over the current drawing. The kolam is made of normal layers, so it
+   can be edited, exported, and viewed in 3D View and Floor & Print like any other drawing.
+7. **Zoom & snap** (bar above the canvas): zoom −/+, **Pan**, **1× 720 ↔ 2× HD** preview,
    **Axis Snap**, **Ring Snap**, **Compass Lock**.
 
 **Save, open and export** (buttons under the canvas and top-right)
 
-7. **Export SVG** → downloads `alpona-studio-vector.svg`. **Export 4K PNG** (top right) →
+8. **Export SVG** → downloads `alpona-studio-vector.svg`. **Export 4K PNG** (top right) →
    `alpona-studio-4k-uhd.png`. **Print Stencil** → `alpona-printable-stencil-300dpi.png`.
    **Replay Timelapse** replays how the alpona was drawn; **Export Reel** records it as a 1080×1080
    `.webm` video. **Greeting Card** adds a festive frame and caption to the design (included in exports).
-8. **Save .alpona** → downloads `alpona-studio-project.alpona.json`. Click **Clear**, then
+9. **Save .alpona** → downloads `alpona-studio-project.alpona.json`. Click **Clear**, then
    **Load .alpona** and choose that file → your drawing comes back.
-9. **Projects** (top bar): save several designs in the browser with thumbnails; open, rename or delete them.
+10. **Projects** (top bar): save several designs in the browser with thumbnails; open, rename or delete them.
    The studio also auto-saves — reload the page and your work is still there.
 
 **The other three views** (top navigation)
 
-10. **Image Lab** — image processing on your current design: point operations (grayscale, negative,
+11. **Image Lab** — image processing on your current design: point operations (grayscale, negative,
     log, gamma, contrast stretch, **histogram equalization** with live histogram), spatial 3×3 filters,
     morphology and **2D FFT**.
-11. **3D View** — your alpona on a 3D courtyard: 1-, 2- and 3-point perspective vs. parallel projection,
+12. **3D View** — your alpona on a 3D courtyard: 1-, 2- and 3-point perspective vs. parallel projection,
     hidden-surface removal (**Wireframe / Painter's / Z-Buffer / Depth Map**), pitch/yaw/roll sliders,
     the live 4×4 matrix, and Night Diya Phong/Gouraud lighting.
-12. **Floor & Print** — **Virtual Floor Try-On** (drag the 4 corner pins TL/TR/BR/BL to fit a floor
+13. **Floor & Print** — **Virtual Floor Try-On** (drag the 4 corner pins TL/TR/BR/BL to fit a floor
     photo; 3×3 homography; *Upload Photo* to use your own), **Chalk Blueprint & A4** printing at real
     size, **Saree Border** (frieze groups), **Laser Bridges** (stencil island bridging),
     **Jamdani Weave** chart, **Photo Unwarper** and **Projector & Trace**.
 
 **Help inside the app**
 
-13. **Documentation** — Quick Start & Advanced Techniques manuals (the canvas stays usable beside it).
+14. **Documentation** — Quick Start & Advanced Techniques manuals (the canvas stays usable beside it).
     **Run & Keys** (or press `?`) — all keyboard shortcuts. **C++ & Specs** — live matrices and a browser
     for the C++11 source files.
 
@@ -133,7 +141,8 @@ Each step says what to click and what you should see. Steps 1–6 take about 5 m
 
 The desktop app is a 1000×796 OpenGL window with **37 clickable buttons**: drawing tools, 4 templates,
 6 pigments, 3 floor surfaces, 4×/6×/8×/12× symmetry with mirror, snap and guide axes, zoom, PNG/SVG/STL
-export and 4 views (**2D Studio, Image Lab NPR, 3D Courtyard, Night Diya 3D**).
+export and 4 views (**2D Studio, Image Lab NPR, 3D Courtyard, Night Diya 3D**). Press **`K`** to draw a
+7×7 pulli kolam (press again for a new one).
 
 ### B1. Windows with Code::Blocks
 1. Install **Code::Blocks** with MinGW (the `codeblocks-…mingw-setup.exe` from <https://www.codeblocks.org/downloads/binaries/>).
@@ -168,7 +177,8 @@ Click the buttons, or use the keys:
 | `U` / `Y` / `C` | Undo / Redo / Clear | `R` | Mirror (Dₙ) ↔ rotation (Cₙ) |
 | `M` / `N` | Padma Lotus / Boishakhi Sun template | `A` / `X` | Guide axes / Magnetic snap |
 | `q` `w` `e` `d` `z` | Ivory, Sindoor, Turmeric, Pata, Neel | `+` `-` `0` | Zoom in / out / 100% |
-| `S` / `V` / `T` | Save PNG / SVG / 3D STL | `Esc` | Exit |
+| `S` / `V` / `T` | Save PNG / SVG / 3D STL | `K` | Pulli kolam (next design on each press) |
+| `Esc` | Exit | | |
 
 Exported files (`alpona_export_N.png`, `alpona_vector_N.svg`, `alpona_pitha_mold_N.stl`) are saved in the
 `cpp-alpona-studio` folder. More details: [`cpp-alpona-studio/README.md`](cpp-alpona-studio/README.md).
@@ -178,10 +188,10 @@ Exported files (`alpona_export_N.png`, `alpona_vector_N.svg`, `alpona_pitha_mold
 ## Part C — Automated tests & the command-line tool
 
 ```bash
-# TypeScript engine: 53 tests (run in the project folder, after npm install)
+# TypeScript engine: 54 tests (run in the project folder, after npm install)
 npm test
 
-# C++11 engine: 43 tests, no OpenGL needed (Windows: mingw32-make test)
+# C++11 engine: 44 tests, no OpenGL needed (Windows: mingw32-make test)
 cd cpp-alpona-studio
 make test
 
@@ -190,10 +200,11 @@ make cli
 ./AlponaCLI --motif padma --export-png padma.png --export-svg padma.svg \
             --export-stl padma_pitha.stl --mode pitha --export-weave padma_loom.csv \
             --export-stencil padma_stencil.png
+./AlponaCLI --kolam 7x7 --kolam-symmetry mirror --export-png kolam.png --export-svg kolam.svg
 ./AlponaCLI --help
 ```
 
-Expected: `# pass 53` / `# fail 0` and `All 43 C++11 Alpona Studio v1.4.2 tests passed!`.
+Expected: `# pass 54` / `# fail 0` and `All 44 C++11 Alpona Studio v1.4.2 tests passed!`.
 Other checks: `npm run lint` (TypeScript type check) and `npm run build` (production build into `dist/`).
 
 ---
@@ -203,7 +214,7 @@ Other checks: `npm run lint` (TypeScript type check) and `npm run build` (produc
 | CLO | Topics | Where in the code (C++11 `cpp-alpona-studio/src/*.cpp` & TypeScript `src/graphics/*.ts`) |
 | --- | --- | --- |
 | **CLO-1** | Colour models (RGB/HSV/CMYK), Porter-Duff alpha compositing, K-means quantization, dithering, DDA & Bresenham line, seed fill | `rasterizer`, `canvas_buffer.h`, `floodfill`, `colorModels.ts`, `colorway_remap`, `weave_chart` (Bayer & Floyd–Steinberg) |
-| **CLO-2** | Midpoint circle, cubic Bézier (de Casteljau), 2D homogeneous transforms (T·R·Sh·S and inverse), Chaikin subdivision, L-systems | `rasterizer`, `bezier`, `transforms`, `layer_transform`, `stroke_craft`, `generative_composer`, `canvas_assist`, `viewport_camera`, `frame_cache` |
+| **CLO-2** | Midpoint circle, cubic Bézier (de Casteljau), 2D homogeneous transforms (T·R·Sh·S and inverse), Chaikin subdivision, L-systems, mirror-curve (pulli kolam) tracing with reflection & rotation symmetry | `rasterizer`, `bezier`, `transforms`, `layer_transform`, `stroke_craft`, `generative_composer`, `kolam_composer`, `canvas_assist`, `viewport_camera`, `frame_cache` |
 | **CLO-3** | Line clipping (Cohen–Sutherland, Liang–Barsky), polygon clipping (Sutherland–Hodgman, Weiler–Atherton), hit-test picking | `transforms`, `layer_stack` |
 | **CLO-4** | 3D transformations, parallel vs. perspective projection, 3D relief meshes (STL), frieze groups, 3×3 homography | `projection3d`, `stl_stamp`, `homography`, `photo_unwarper`, `frieze_border` |
 | **CLO-5** | Hidden-surface removal (Painter's, Z-buffer), Phong/Gouraud illumination, NPR shading | `projection3d`, `phong_lighting`, `natural_media` |
@@ -218,10 +229,10 @@ Alphona/
 ├── package.json              Web app dependencies and scripts (npm start / test / build)
 ├── index.html, src/          Web studio (React + TypeScript + Vite)
 │   ├── App.tsx, components/  User interface
-│   └── graphics/             Graphics engine + graphics.test.ts (53 tests)
+│   └── graphics/             Graphics engine + graphics.test.ts (54 tests)
 └── cpp-alpona-studio/        C++11 engine
     ├── src/, include/        Engine, main.cpp (FreeGLUT desktop app), cli_pipeline.cpp (AlponaCLI)
-    ├── tests/                test_graphics.cpp (43 tests)
+    ├── tests/                test_graphics.cpp (44 tests)
     ├── AlponaStudio.cbp      Code::Blocks project
     └── Makefile              make / make cli / make test
 ```

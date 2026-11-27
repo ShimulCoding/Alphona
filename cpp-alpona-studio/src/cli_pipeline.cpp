@@ -13,6 +13,7 @@
 
 #include "frieze_border.h"
 #include "generative_composer.h"
+#include "kolam_composer.h"
 #include "motifs.h"
 #include "natural_media.h"
 #include "png_writer.h"
@@ -22,6 +23,7 @@
 #include "transforms.h"
 #include "weave_chart.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -93,7 +95,12 @@ void printUsage() {
         << "  --motif <padma|boishakhi|kalka|chowk>  Load a starter Bengali Alpona motif (default: padma)\n"
         << "  --procedural <seed>                    Generate Procedural Lata-Pata + Phyllotaxis Alpona\n"
         << "  --sectors <4..16>                      Symmetry sector count for procedural mode (default: 8)\n"
-        << "  --size <px>                            Canvas resolution in px (default: 512)\n\n"
+        << "  --size <px>                            Canvas resolution in px (default: 512)\n"
+        << "  --kolam <rows>x<cols>                  Draw a pulli dot-grid kolam, e.g. --kolam 7x7 (2..12 dots)\n"
+        << "  --kolam-symmetry <none|mirror|rotational>  Kolam mirror layout symmetry (default: mirror)\n"
+        << "  --kolam-density <0..1>                 Share of inner edges with a mirror (default: 0.35)\n"
+        << "  --kolam-seed <n>                       Kolam seed; searches n, n+1, ... for one stroke (default: 7)\n"
+        << "  --kolam-loops                          Keep the seed as is (allow several loops)\n\n"
         << "Exporters:\n"
         << "  --export-png <file.png>                Export software-rasterized RGBA PNG\n"
         << "  --export-svg <file.svg>                Export precision vector SVG\n"
@@ -111,6 +118,8 @@ void printUsage() {
 int main(int argc, char** argv) {
     std::string motifName = "padma";
     bool useProcedural = false;
+    bool useKolam = false;
+    KolamConfig kolamCfg;
     uint32_t procSeed = 2026;
     int sectors = 8;
     int canvasSize = 512;
@@ -135,6 +144,26 @@ int main(int argc, char** argv) {
         } else if (arg == "--procedural" && i + 1 < argc) {
             useProcedural = true;
             procSeed = static_cast<uint32_t>(std::strtoul(argv[++i], nullptr, 10));
+        } else if (arg == "--kolam" && i + 1 < argc) {
+            useKolam = true;
+            useProcedural = false;
+            const std::string dims = argv[++i];
+            const size_t xPos = dims.find_first_of("xX");
+            const int rows = std::atoi(dims.substr(0, xPos).c_str());
+            const int cols = xPos == std::string::npos ? rows : std::atoi(dims.substr(xPos + 1).c_str());
+            kolamCfg.rows = clampKolamDots(rows);
+            kolamCfg.cols = clampKolamDots(cols);
+        } else if (arg == "--kolam-symmetry" && i + 1 < argc) {
+            const std::string sym = argv[++i];
+            kolamCfg.symmetry = sym == "none" ? KolamSymmetry::None
+                              : sym == "rotational" ? KolamSymmetry::Rotational
+                              : KolamSymmetry::Mirror;
+        } else if (arg == "--kolam-density" && i + 1 < argc) {
+            kolamCfg.mirrorDensity = std::atof(argv[++i]);
+        } else if (arg == "--kolam-seed" && i + 1 < argc) {
+            kolamCfg.seed = static_cast<uint32_t>(std::strtoul(argv[++i], nullptr, 10));
+        } else if (arg == "--kolam-loops") {
+            kolamCfg.requireSingleLoop = false;
         } else if (arg == "--sectors" && i + 1 < argc) {
             sectors = std::atoi(argv[++i]);
             if (sectors < 4) sectors = 4;
@@ -166,7 +195,21 @@ int main(int argc, char** argv) {
     CanvasBuffer surface(canvasSize, canvasSize);
     std::vector<DrawOperation> ops;
 
-    if (useProcedural) {
+    if (useKolam) {
+        surface.clear(bgColor);
+        KolamComposeResult kolam = composeKolam(canvasSize, kolamCfg);
+        ops = buildKolamDrawOperations(
+            kolam, Color{248, 244, 236, 255}, Color{245, 158, 11, 255},
+            std::max(2, canvasSize / 240));
+        for (size_t i = 0; i < ops.size(); ++i) {
+            executeOperation(surface, ops[i]);
+        }
+        std::cout << "[AlponaCLI] Drew " << kolam.rows << "x" << kolam.cols
+                  << " pulli kolam (" << kolam.loopCount
+                  << (kolam.loopCount == 1 ? " loop = one stroke" : " loops")
+                  << ", " << kolam.segmentCount << " segments, "
+                  << kolam.innerMirrorCount << " mirrors, seed=" << kolam.seedUsed << ")\n";
+    } else if (useProcedural) {
         surface.clear(bgColor);
         ProceduralAlponaConfig cfg;
         cfg.seed = procSeed;
