@@ -2264,3 +2264,84 @@ test('57. Autosave indicator reports a failed save instead of a stale "Synced"',
   assert.equal(recovered.status, 'synced');
   assert.equal(recovered.label, 'Synced to Local Storage');
 });
+
+import { computeTeamPlan, teamIndexForPixel } from './teamPlanner';
+
+test('58. Team floor planner splits the alpona into team sections with area & paint per colour', () => {
+  // 100x100 synthetic floor: right half Sindoor red, bottom-left quadrant Turmeric gold.
+  const bg = '#16161B';
+  const surf = { width: 100, height: 100, data: new Uint8ClampedArray(100 * 100 * 4) };
+  const put = (x: number, y: number, hex: string) => {
+    const c = hexToRgba(hex);
+    const i = (y * 100 + x) * 4;
+    surf.data[i] = c.r; surf.data[i + 1] = c.g; surf.data[i + 2] = c.b; surf.data[i + 3] = 255;
+  };
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 100; x++) {
+      put(x, y, x >= 50 ? '#DC2626' : y >= 50 ? '#F59E0B' : bg);
+    }
+  }
+
+  // Sectors are numbered clockwise from 12 o'clock.
+  assert.equal(teamIndexForPixel(75, 25, 100, 100, 4, 'sectors'), 0);
+  assert.equal(teamIndexForPixel(75, 75, 100, 100, 4, 'sectors'), 1);
+  assert.equal(teamIndexForPixel(25, 75, 100, 100, 4, 'sectors'), 2);
+  assert.equal(teamIndexForPixel(25, 25, 100, 100, 4, 'sectors'), 3);
+  assert.equal(teamIndexForPixel(10, 99, 100, 100, 3, 'strips'), 2);
+
+  // 2 m x 2 m floor -> every pixel is 4 cm2; 175 mL of paint per m2.
+  const sectors = computeTeamPlan(surf, bg, { diameterCm: 200, teams: 4, mode: 'sectors' });
+  assert.equal(sectors.teams.length, 4);
+  assert.deepEqual(sectors.teams.map((t) => t.areaSqM), [1, 1, 1, 0]);
+  assert.deepEqual(sectors.teams.map((t) => t.paintMl), [175, 175, 175, 0]);
+  assert.equal(sectors.teams[0].label, 'Team 1');
+  assert.equal(sectors.teams[0].pigments[0].name, 'Sindoor Red');
+  assert.equal(sectors.teams[2].pigments[0].name, 'Turmeric Gold');
+  assert.deepEqual(sectors.teams.map((t) => [t.startDeg, t.endDeg]), [[0, 90], [90, 180], [180, 270], [270, 360]]);
+  assert.equal(sectors.totalAreaSqM, 3);
+  assert.equal(sectors.totalPaintMl, 525);
+
+  const strips = computeTeamPlan(surf, bg, { diameterCm: 200, teams: 2, mode: 'strips', paintMlPerSqM: 200 });
+  assert.deepEqual(strips.teams.map((t) => t.areaSqM), [1, 2]);
+  assert.deepEqual(strips.teams.map((t) => t.paintMl), [200, 400]);
+  assert.deepEqual(strips.teams.map((t) => [t.startCm, t.endCm]), [[0, 100], [100, 200]]);
+  assert.deepEqual(
+    strips.teams[1].pigments.map((p) => [p.name, p.areaSqM, p.paintMl]),
+    [['Sindoor Red', 1, 200], ['Turmeric Gold', 1, 200]]
+  );
+
+  // Team count and floor size are clamped to sensible ranges.
+  assert.equal(computeTeamPlan(surf, bg, { diameterCm: 200, teams: 0, mode: 'sectors' }).teams.length, 1);
+  assert.equal(computeTeamPlan(surf, bg, { diameterCm: 200, teams: 99, mode: 'strips' }).teams.length, 24);
+  assert.equal(computeTeamPlan(surf, bg, { diameterCm: 5, teams: 2, mode: 'strips' }).diameterCm, 40);
+});
+
+import { exportTeamPlanCsv, teamLabelAnchor } from './teamPlanner';
+
+test('59. Team plan CSV matches the C++ AlponaCLI format and team labels sit inside their sections', () => {
+  const bg = '#16161B';
+  const surf = { width: 100, height: 100, data: new Uint8ClampedArray(100 * 100 * 4) };
+  const red = hexToRgba('#DC2626');
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 100; x++) {
+      const i = (y * 100 + x) * 4;
+      const c = x >= 50 ? red : hexToRgba(bg);
+      surf.data[i] = c.r; surf.data[i + 1] = c.g; surf.data[i + 2] = c.b; surf.data[i + 3] = 255;
+    }
+  }
+  const plan = computeTeamPlan(surf, bg, { diameterCm: 200, teams: 4, mode: 'sectors' });
+  const csv = exportTeamPlanCsv(plan);
+  assert.ok(csv.startsWith('team,colour,area_m2,paint_ml\n'));
+  assert.ok(csv.includes('Team 1,Sindoor Red,1.0000,175\n'));
+  assert.ok(csv.includes('Team 1,All colours,1.0000,175\n'));
+  assert.ok(csv.includes('Team 4,All colours,0.0000,0\n'));
+  assert.ok(csv.endsWith('Total,,2.0000,350\n'));
+
+  // Label anchors are the point each team's number is drawn at, inside its own section.
+  for (const mode of ['sectors', 'strips'] as const) {
+    for (let t = 0; t < 6; t++) {
+      const p = teamLabelAnchor(t, 6, mode, 720);
+      assert.equal(teamIndexForPixel(Math.floor(p.x), Math.floor(p.y), 720, 720, 6, mode), t);
+    }
+  }
+});

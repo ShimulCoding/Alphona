@@ -9,7 +9,7 @@ CORE_SRC := src/transforms.cpp src/rasterizer.cpp src/floodfill.cpp src/motifs.c
             src/weave_chart.cpp src/generative_composer.cpp src/natural_media.cpp \
             src/canvas_assist.cpp src/layer_stack.cpp src/layer_transform.cpp \
             src/viewport_camera.cpp src/frame_cache.cpp src/desktop_gui.cpp \
-            src/kolam_composer.cpp
+            src/kolam_composer.cpp src/team_planner.cpp
 
 ifeq ($(OS),Windows_NT)
   # Recipes use cmd.exe even when Git's sh.exe is on PATH (copy/del below).

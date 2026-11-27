@@ -24,6 +24,7 @@
 #include "../include/stencil_bridger.h"
 #include "../include/stl_stamp.h"
 #include "../include/stroke_craft.h"
+#include "../include/team_planner.h"
 #include "../include/svg_writer.h"
 #include "../include/timelapse_frames.h"
 #include "../include/transforms.h"
@@ -1080,6 +1081,61 @@ int main() {
         assert(svg.find("<circle") < svg.find("fill=\"#DC2626\""));
     }
 
-    std::cout << "All 45 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
+    // 46. Team floor planner: sections, area & paint per colour (TS parity: test 58)
+    {
+        const Color bg = {22, 22, 27, 255};
+        const Color red = {220, 38, 38, 255};
+        const Color gold = {245, 158, 11, 255};
+        CanvasBuffer floor(100, 100);
+        for (int y = 0; y < 100; ++y)
+            for (int x = 0; x < 100; ++x)
+                floor.setPixel(x, y, x >= 50 ? red : (y >= 50 ? gold : bg));
+
+        assert(teamIndexForPixel(75, 25, 100, 100, 4, TeamSplitMode::Sectors) == 0);
+        assert(teamIndexForPixel(75, 75, 100, 100, 4, TeamSplitMode::Sectors) == 1);
+        assert(teamIndexForPixel(25, 75, 100, 100, 4, TeamSplitMode::Sectors) == 2);
+        assert(teamIndexForPixel(25, 25, 100, 100, 4, TeamSplitMode::Sectors) == 3);
+        assert(teamIndexForPixel(10, 99, 100, 100, 3, TeamSplitMode::Strips) == 2);
+
+        TeamPlanConfig cfg;
+        cfg.diameterCm = 200.0;
+        cfg.teams = 4;
+        cfg.mode = TeamSplitMode::Sectors;
+        TeamPlan sectors = computeTeamPlan(floor, bg, cfg);
+        assert(sectors.teams.size() == 4);
+        const double expectArea[4] = {1.0, 1.0, 1.0, 0.0};
+        const int expectMl[4] = {175, 175, 175, 0};
+        for (int t = 0; t < 4; ++t) {
+            assert(std::abs(sectors.teams[t].areaSqM - expectArea[t]) < 1e-9);
+            assert(sectors.teams[t].paintMl == expectMl[t]);
+        }
+        assert(sectors.teams[0].label == "Team 1");
+        assert(sectors.teams[0].pigments[0].name == "Sindoor Red");
+        assert(sectors.teams[2].pigments[0].name == "Turmeric Gold");
+        assert(std::abs(sectors.teams[1].startDeg - 90.0) < 1e-9 && std::abs(sectors.teams[1].endDeg - 180.0) < 1e-9);
+        assert(std::abs(sectors.totalAreaSqM - 3.0) < 1e-9 && sectors.totalPaintMl == 525);
+
+        cfg.teams = 2;
+        cfg.mode = TeamSplitMode::Strips;
+        cfg.paintMlPerSqM = 200.0;
+        TeamPlan strips = computeTeamPlan(floor, bg, cfg);
+        assert(strips.teams[0].paintMl == 200 && strips.teams[1].paintMl == 400);
+        assert(std::abs(strips.teams[1].startCm - 100.0) < 1e-9 && std::abs(strips.teams[1].endCm - 200.0) < 1e-9);
+        assert(strips.teams[1].pigments.size() == 2 && strips.teams[1].pigments[1].name == "Turmeric Gold");
+
+        cfg.teams = 0;
+        assert(computeTeamPlan(floor, bg, cfg).teams.size() == 1);
+        cfg.teams = 99;
+        assert(computeTeamPlan(floor, bg, cfg).teams.size() == 24);
+        cfg.diameterCm = 5.0;
+        assert(std::abs(computeTeamPlan(floor, bg, cfg).diameterCm - 40.0) < 1e-9);
+
+        const std::string csv = exportTeamPlanCsv(sectors);
+        assert(csv.find("team,colour,area_m2,paint_ml") == 0);
+        assert(csv.find("Team 1,Sindoor Red,1.0000,175") != std::string::npos);
+        assert(csv.find("Total,,3.0000,525") != std::string::npos);
+    }
+
+    std::cout << "All 46 C++11 Alpona Studio v1.4.2 tests passed!" << std::endl;
     return 0;
 }
