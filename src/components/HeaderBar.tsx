@@ -1,4 +1,4 @@
-import { Download, FlaskConical, FolderOpen } from 'lucide-react';
+import { BookOpen, CircleHelp, Download, FlaskConical, FolderOpen } from 'lucide-react';
 
 export type StudioView =
   | 'studio'
@@ -11,10 +11,13 @@ export type StudioView =
 interface HeaderBarProps {
   activeView: StudioView;
   labMode: boolean;
+  docsOpen: boolean;
   savedProjectsCount: number;
   onChangeView: (view: StudioView) => void;
   onToggleLabMode: () => void;
+  onToggleDocs: () => void;
   onOpenGallery: () => void;
+  onOpenHelp: () => void;
   onExportPng: () => void;
 }
 
@@ -40,10 +43,13 @@ const NAV_ITEMS: Array<{
 export function HeaderBar({
   activeView,
   labMode,
+  docsOpen,
   savedProjectsCount,
   onChangeView,
   onToggleLabMode,
+  onToggleDocs,
   onOpenGallery,
+  onOpenHelp,
   onExportPng,
 }: HeaderBarProps) {
   const visibleNav = NAV_ITEMS.filter((item) => labMode || !item.academicOnly);
@@ -58,9 +64,15 @@ export function HeaderBar({
             e.preventDefault();
             onChangeView('studio');
           }}
-          className="font-display text-base font-semibold tracking-tight text-zinc-900 whitespace-nowrap shrink-0 md:text-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#B91C1C]"
+          className="inline-flex items-center gap-2 font-display text-sm font-semibold tracking-tight text-zinc-900 whitespace-nowrap shrink-0 sm:text-base md:text-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#B91C1C]"
         >
-          Alpona Studio
+          <span>Alpona Studio</span>
+          <span
+            data-testid="header-edition-badge"
+            className="inline-flex items-center rounded border border-[#B91C1C]/25 bg-[#B91C1C]/[0.07] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#991B1B] uppercase"
+          >
+            Pro
+          </span>
         </a>
 
         {/* Desktop Centered Navigation */}
@@ -97,6 +109,34 @@ export function HeaderBar({
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
+            onClick={onToggleDocs}
+            data-testid="toggle-documentation-sidebar"
+            aria-pressed={docsOpen}
+            title="Open non-modal Quick Start & Advanced Techniques PDF-style Documentation Sidebar"
+            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 md:h-9 md:px-3 ${
+              docsOpen
+                ? 'border-zinc-900 bg-zinc-900 text-white'
+                : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:text-zinc-950'
+            }`}
+          >
+            <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Documentation</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenHelp}
+            data-testid="open-shortcuts-help"
+            aria-label="Quick Run Guide & Keyboard Shortcuts"
+            title="Quick Run Guide & Keyboard Shortcuts (?)"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 text-xs font-medium text-zinc-700 transition-colors hover:border-zinc-400 hover:text-zinc-950 whitespace-nowrap shrink-0 md:h-9 md:px-3"
+          >
+            <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden xl:inline">Run &amp; Keys</span>
+          </button>
+
+          <button
+            type="button"
             onClick={onOpenGallery}
             data-testid="open-projects-gallery"
             title="Open local multi-project IndexedDB gallery"
@@ -118,8 +158,8 @@ export function HeaderBar({
             aria-pressed={labMode}
             title={
               labMode
-                ? 'CSE 401/402 Lab Mode active — click for distraction-free Artist Mode'
-                : 'Artist Mode active — click to show CSE 401/402 Lab controls & C++ tabs'
+                ? 'Engine Specs & C++ Mode active — click for distraction-free Artist Studio'
+                : 'Artist Studio active — click to inspect C++11 OpenGL source, algorithms & git log'
             }
             className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 md:h-9 md:px-3 ${
               labMode
@@ -129,7 +169,7 @@ export function HeaderBar({
           >
             <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="hidden lg:inline">
-              {labMode ? 'Lab Mode' : 'Artist Mode'}
+              {labMode ? 'Artist View' : 'C++ & Specs'}
             </span>
           </button>
 

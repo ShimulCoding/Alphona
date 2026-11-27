@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { AlgorithmsView } from './components/AlgorithmsView';
 import { AlponaCanvas, CANVAS_SIZE } from './components/AlponaCanvas';
 import { ControlDeck } from './components/ControlDeck';
 import { CppSourceView } from './components/CppSourceView';
+import { DocumentationSidebar } from './components/DocumentationSidebar';
 import { DraftRecoveryBanner } from './components/DraftRecoveryBanner';
 import { FloorPrintView } from './components/FloorPrintView';
 import { HeaderBar, type StudioView } from './components/HeaderBar';
 import { ImageLabView } from './components/ImageLabView';
 import { Projection3DView } from './components/Projection3DView';
 import { ProjectGalleryModal } from './components/ProjectGalleryModal';
+import { ShortcutsHelpModal } from './components/ShortcutsHelpModal';
+import { StudioSplashOverlay } from './components/StudioSplashOverlay';
+import type { DocGuideTab } from './graphics/documentationGuides';
 import { BENGALI_BEZIER_STAMPS } from './graphics/bezier';
+import {
+  STUDIO_QUICK_START_TEMPLATES,
+  type StudioQuickStartTemplate,
+} from './graphics/desktopGui';
+import { getCanvasContinuityTransition } from './graphics/viewContinuity';
 import {
   DEFAULT_SNAP_CONFIG,
   type SnapConfig,
@@ -21,6 +31,7 @@ import {
 } from './graphics/colorwayRemap';
 import {
   clearDraftFromStorage,
+  computeDraftSyncIndicator,
   loadDraftFromStorage,
   saveDraftToStorage,
 } from './graphics/draftStorage';
@@ -110,9 +121,13 @@ export default function App() {
   }, []);
 
   const [activeView, setActiveView] = useState<StudioView>('studio');
-  const [labMode, setLabMode] = useState(true);
+  const [previousView, setPreviousView] = useState<StudioView>('studio');
+  const [labMode, setLabMode] = useState(false);
   const [hdPreview, setHdPreview] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
+  const [docsTab, setDocsTab] = useState<DocGuideTab>('quick-start');
   const [galleryProjects, setGalleryProjects] = useState<SavedAlponaProject[]>(
     []
   );
@@ -165,11 +180,17 @@ export default function App() {
   const [operations, setOperations] = useState<DrawOperation[]>(
     () => initialDraft?.operations ?? INITIAL_MOTIF.buildOperations(CANVAS_SIZE)
   );
+  const defaultMotifStrokeCount = useMemo(
+    () => INITIAL_MOTIF.buildOperations(CANVAS_SIZE).length,
+    []
+  );
   const [restoredDraftInfo, setRestoredDraftInfo] = useState<{
     savedAt: number;
     strokesCount: number;
   } | null>(() =>
-    initialDraft
+    initialDraft &&
+    (initialDraft.operations.length !== defaultMotifStrokeCount ||
+      initialDraft.surfaceId !== INITIAL_MOTIF.defaultSurface)
       ? {
           savedAt: initialDraft.savedAt,
           strokesCount: initialDraft.operations.length,
@@ -177,6 +198,9 @@ export default function App() {
       : null
   );
   const hasUserMutatedRef = useRef(false);
+  const [lastDraftSyncedAt, setLastDraftSyncedAt] = useState<number | null>(
+    () => initialDraft?.savedAt ?? null
+  );
   const [pastSnapshots, setPastSnapshots] = useState<DrawOperation[][]>([]);
   const [futureSnapshots, setFutureSnapshots] = useState<DrawOperation[][]>([]);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -217,14 +241,14 @@ export default function App() {
     []
   );
 
-  // Debounced (450ms) automatic localStorage draft persistence after first user edit
+  // Debounced (450ms) automatic localStorage draft persistence
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!hasUserMutatedRef.current && !initialDraft) return;
     const timer = window.setTimeout(() => {
-      saveDraftToStorage(window.localStorage, {
+      const savedAt = Date.now();
+      const didSave = saveDraftToStorage(window.localStorage, {
         version: 1,
-        savedAt: Date.now(),
+        savedAt,
         surfaceId,
         symmetry,
         lineAlgorithm,
@@ -232,6 +256,9 @@ export default function App() {
         transform2D,
         operations,
       });
+      if (didSave) {
+        setLastDraftSyncedAt(savedAt);
+      }
     }, 450);
     return () => window.clearTimeout(timer);
   }, [
@@ -241,8 +268,16 @@ export default function App() {
     lineAlgorithm,
     clippingWindow,
     transform2D,
-    initialDraft,
   ]);
+
+  const draftSyncIndicator = useMemo(
+    () =>
+      computeDraftSyncIndicator(
+        lastDraftSyncedAt,
+        lastDraftSyncedAt ?? Date.now()
+      ),
+    [lastDraftSyncedAt]
+  );
 
   // Load saved IndexedDB multi-project gallery entries on mount
   useEffect(() => {
@@ -457,13 +492,31 @@ export default function App() {
     [operations]
   );
 
+  const handleChangeView = useCallback((nextView: StudioView) => {
+    setActiveView((cur) => {
+      if (cur !== nextView) {
+        setPreviousView(cur);
+      }
+      return nextView;
+    });
+  }, []);
+
+  const viewContinuity = useMemo(
+    () => getCanvasContinuityTransition(previousView, activeView),
+    [previousView, activeView]
+  );
+
   const handleToggleLabMode = useCallback(() => {
     setLabMode((prev) => {
       const next = !prev;
       if (!next) {
-        setActiveView((cur) =>
-          cur === 'algorithms' || cur === 'cpp' ? 'studio' : cur
-        );
+        setActiveView((cur) => {
+          if (cur === 'algorithms' || cur === 'cpp') {
+            setPreviousView(cur);
+            return 'studio';
+          }
+          return cur;
+        });
       }
       return next;
     });
@@ -606,6 +659,34 @@ export default function App() {
     setSelectedLayerId(null);
     setSelectedGroupName(null);
   }, []);
+
+  const handleApplyQuickStartTemplate = useCallback(
+    (template: StudioQuickStartTemplate) => {
+      setIsReplaying(false);
+      hasUserMutatedRef.current = true;
+      setSurfaceId(template.surfaceId);
+      setSymmetry({ ...template.symmetry });
+      setColor(template.defaultColor);
+      setSelectedLayerId(null);
+      setSelectedGroupName(null);
+      setPastSnapshots([]);
+      setFutureSnapshots([]);
+
+      if (template.motifId) {
+        const motif = ALPONA_MOTIFS.find((m) => m.id === template.motifId);
+        if (motif) {
+          setActiveMotifId(motif.id);
+          setOperations(motif.buildOperations(CANVAS_SIZE));
+        }
+      } else {
+        setActiveMotifId('blank-canvas');
+        setOperations([]);
+      }
+      setExportNotice(`Loaded "${template.title}" workspace template.`);
+      setTimeout(() => setExportNotice(null), 2400);
+    },
+    []
+  );
 
   const handleApplyColorway = useCallback(
     (palette: string[], nextSurfaceId: CanvasSurfaceId, label: string) => {
@@ -773,7 +854,7 @@ export default function App() {
           durationSec: 4.5,
           titleText: greetingCard.enabled
             ? `${greetingCard.headline} · Alpona Studio`
-            : 'Alpona Studio · Bengali Symmetry Art',
+            : 'Alpona Studio · 2D/3D Vector & Raster Suite',
           onProgress: (pct) => setReelProgress(pct),
         }
       );
@@ -908,7 +989,12 @@ export default function App() {
       }
 
       const key = e.key.toLowerCase();
-      if (key === 'f') setTool('freehand');
+      if (e.key === '?') {
+        e.preventDefault();
+        setHelpOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setHelpOpen(false);
+      } else if (key === 'f') setTool('freehand');
       else if (key === 'l') setTool('line');
       else if (key === 'o') setTool('circle');
       else if (key === 'p') setTool('polygon');
@@ -933,13 +1019,17 @@ export default function App() {
 
   return (
     <div className="studio-grid-bg flex min-h-screen flex-col text-zinc-900">
+      <StudioSplashOverlay />
       <HeaderBar
         activeView={activeView}
         labMode={labMode}
+        docsOpen={docsOpen}
         savedProjectsCount={galleryProjects.length}
-        onChangeView={setActiveView}
+        onChangeView={handleChangeView}
         onToggleLabMode={handleToggleLabMode}
+        onToggleDocs={() => setDocsOpen((prev) => !prev)}
         onOpenGallery={() => setGalleryOpen(true)}
+        onOpenHelp={() => setHelpOpen(true)}
         onExportPng={handleExportPng}
       />
 
@@ -954,6 +1044,33 @@ export default function App() {
       )}
 
       <main className="flex-1">
+        <motion.div
+          key={activeView}
+          data-testid="view-continuity-stage"
+          data-active-view={activeView}
+          data-from-view={viewContinuity.fromView}
+          data-transition-dir={viewContinuity.direction}
+          data-continuity-label={viewContinuity.continuityLabel}
+          className="canvas-continuity-stage"
+          initial={{
+            opacity: 0.72,
+            x: viewContinuity.offsetX,
+            y: viewContinuity.offsetY,
+            scale: viewContinuity.initialScale,
+            rotateX: viewContinuity.initialRotateXDeg,
+          }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotateX: 0,
+          }}
+          transition={{
+            duration: viewContinuity.durationSec,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+        >
         {activeView === 'studio' && (
           <div className="mx-auto max-w-[1360px] px-4 py-6 sm:px-6 lg:px-8">
             {restoredDraftInfo && (
@@ -966,6 +1083,55 @@ export default function App() {
                 />
               </div>
             )}
+
+            {/* Quick-Start Studio Templates Bar for First-Time / Consumer Users */}
+            <section
+              aria-label="Quick-Start Studio Templates"
+              data-testid="studio-quick-start-bar"
+              className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200/90 bg-white px-3.5 py-2.5 shadow-2xs"
+            >
+              <div className="flex items-center gap-2 text-xs text-zinc-600">
+                <span className="font-semibold text-zinc-900">
+                  Quick-Start Canvas
+                </span>
+                <span aria-hidden="true">·</span>
+                <span className="hidden sm:inline">
+                  Pick a curated folk art template or start from a blank stage
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {STUDIO_QUICK_START_TEMPLATES.map((tpl) => {
+                  const isCurrent =
+                    (tpl.motifId !== null && activeMotifId === tpl.motifId) ||
+                    (tpl.motifId === null &&
+                      (activeMotifId === 'blank-canvas' ||
+                        operations.length === 0));
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      data-testid={`quick-start-${tpl.id}`}
+                      aria-pressed={isCurrent}
+                      title={tpl.subtitle}
+                      onClick={() => handleApplyQuickStartTemplate(tpl)}
+                      className={`inline-flex h-8 items-center gap-2 rounded-md border px-2.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                        isCurrent
+                          ? 'border-zinc-900 bg-zinc-900 text-white'
+                          : 'border-zinc-300 bg-[#FAF9F5] text-zinc-700 hover:border-zinc-400 hover:bg-white hover:text-zinc-950'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 rounded-xs border border-black/15"
+                        style={{ backgroundColor: tpl.accentHex }}
+                      />
+                      <span>{tpl.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_356px]">
               {/* Primary Interactive Raster Stage */}
               <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
@@ -1041,19 +1207,19 @@ export default function App() {
 
                 {/* Concise Contextual Craft Note beneath Stage */}
                 <div className="mx-auto max-w-[680px] border-t border-zinc-200/80 pt-4 text-xs leading-relaxed text-zinc-600">
-                  Draw freehand curves, Bresenham/DDA lines, midpoint circles,
-                  Weiler-Atherton concave stars, or Cubic Bézier Kalka/Shankha
-                  stamps across{' '}
+                  Paint freehand rice-paste curves, geometric spokes, concentric
+                  rings, star petals, or Kalka/Shankha flourishes across{' '}
                   <span className="font-mono font-medium text-zinc-900">
                     {symmetry.reflect
-                      ? `${symmetry.sectors * 2} dihedral`
+                      ? `${symmetry.sectors * 2} mirrored`
                       : `${symmetry.sectors} rotational`}
                   </span>{' '}
-                  sectors. Try{' '}
+                  sectors. Switch to{' '}
                   <strong className="font-medium text-zinc-800">
                     Floor &amp; Print
                   </strong>{' '}
-                  for 4-corner floor photo try-on &amp; tiled A4 chalk stencils.
+                  for 4-corner courtyard photo try-on, 3D Pitha mold stamps, and
+                  printable A4 chalk stencils.
                 </div>
               </div>
 
@@ -1135,7 +1301,7 @@ export default function App() {
             operations={operations}
             surface={surface}
             renderOptions={renderOptions}
-            onReturnToStudio={() => setActiveView('studio')}
+            onReturnToStudio={() => handleChangeView('studio')}
           />
         )}
 
@@ -1145,7 +1311,7 @@ export default function App() {
             operations={operations}
             surface={surface}
             renderOptions={renderOptions}
-            onReturnToStudio={() => setActiveView('studio')}
+            onReturnToStudio={() => handleChangeView('studio')}
           />
         )}
 
@@ -1155,7 +1321,7 @@ export default function App() {
             surface={surface}
             renderOptions={renderOptions}
             sectors={symmetry.sectors}
-            onReturnToStudio={() => setActiveView('studio')}
+            onReturnToStudio={() => handleChangeView('studio')}
           />
         )}
 
@@ -1166,28 +1332,68 @@ export default function App() {
             lineAlgorithm={lineAlgorithm}
             clippingWindow={clippingWindow}
             transform2D={transform2D}
-            onReturnToStudio={() => setActiveView('studio')}
+            onReturnToStudio={() => handleChangeView('studio')}
           />
         )}
 
         {activeView === 'cpp' && (
-          <CppSourceView onReturnToStudio={() => setActiveView('studio')} />
+          <CppSourceView onReturnToStudio={() => handleChangeView('studio')} />
         )}
+        </motion.div>
       </main>
 
       <footer className="mt-10 border-t border-zinc-200/90 bg-[#F6F5F1] py-5">
         <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-4 px-4 text-xs text-zinc-500 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium text-zinc-700">Alpona Studio</span>
+            <span className="font-medium text-zinc-800">
+              Alpona Studio
+            </span>
             <span aria-hidden="true">·</span>
-            <span>CSE 401 &amp; CSE 402 Computer Graphics &amp; Image Processing</span>
-            <span aria-hidden="true">·</span>
-            <span>Metropolitan University, Sylhet</span>
+            <span>
+              Commercial 2D/3D Vector, Multi-Layer Compositing &amp; Spatial
+              Projection Suite
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span>Shimul Chowdhury (231-115-087)</span>
+            <span>Enterprise Graphics Core</span>
             <span aria-hidden="true">·</span>
-            <span>Gobindo Debnath Dipro (231-115-118)</span>
+            <span>4K Ultra-HD PNG, Vector SVG &amp; 3D Binary STL</span>
+            {labMode && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>C++11 OpenGL Desktop &amp; CLI Engine</span>
+              </>
+            )}
+            <span aria-hidden="true">·</span>
+            <div
+              data-testid="footer-version-sync-group"
+              className="inline-flex items-center gap-2"
+            >
+              <span
+                data-testid="footer-build-version"
+                className="font-mono text-[11px] text-zinc-400"
+              >
+                v1.4.2
+              </span>
+              {draftSyncIndicator.visible && (
+                <span
+                  key={draftSyncIndicator.lastSyncedAt}
+                  role="status"
+                  aria-live="polite"
+                  data-testid="footer-draft-sync-indicator"
+                  data-sync-pulsing={
+                    draftSyncIndicator.isPulsing ? 'true' : 'false'
+                  }
+                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-600"
+                >
+                  <span aria-hidden="true" className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+                  </span>
+                  <span>{draftSyncIndicator.label}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </footer>
@@ -1200,6 +1406,16 @@ export default function App() {
         onLoadProject={handleLoadFromGallery}
         onRenameProject={handleRenameGalleryProject}
         onDeleteProject={handleDeleteGalleryProject}
+      />
+      <ShortcutsHelpModal
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+      />
+      <DocumentationSidebar
+        open={docsOpen}
+        activeTab={docsTab}
+        onChangeTab={setDocsTab}
+        onClose={() => setDocsOpen(false)}
       />
     </div>
   );
