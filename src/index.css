@@ -69,3 +69,37 @@ input[type="range"].studio-slider::-moz-range-thumb {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
+
+/* Subtle Canvas & Stage Continuity Transitions (Studio <-> Image Lab <-> 3D View) */
+@keyframes canvasStageContinuityIn {
+  0% {
+    opacity: 0.72;
+    transform: translate3d(0, 6px, 0) scale(0.988);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.canvas-continuity-stage {
+  will-change: opacity, transform;
+  transform-origin: center top;
+}
+
+.canvas-continuity-surface {
+  animation: canvasStageContinuityIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas-continuity-surface {
+    animation: none;
+    transition: none;
+  }
+}
+
