@@ -32,8 +32,6 @@ import pngWriterH from '../../cpp-alpona-studio/include/png_writer.h?raw';
 import canvasBufferH from '../../cpp-alpona-studio/include/canvas_buffer.h?raw';
 import testGraphicsCpp from '../../cpp-alpona-studio/tests/test_graphics.cpp?raw';
 import makefileRaw from '../../cpp-alpona-studio/Makefile?raw';
-import pushSh from '../../cpp-alpona-studio/push_to_github.sh?raw';
-import pushPs1 from '../../cpp-alpona-studio/push_to_github.ps1?raw';
 
 export interface ProjectSourceFile {
   id: string;
@@ -318,11 +316,6 @@ export const CPP_PROJECT_FILES: ProjectSourceFile[] = [
     content: makefileRaw,
   },
 ];
-
-export const GIT_PUSH_SCRIPTS = {
-  bash: pushSh,
-  powershell: pushPs1,
-};
 
 export interface CommitCycleSpec {
   cycle: number;
@@ -837,6 +830,14 @@ export const GIT_COMMIT_CYCLES: CommitCycleSpec[] = [
     scope: "Kolam Dot Grid panel (rows x cols pulli dots, Free / Mirror / Rotate symmetry, mirror density, seed, one-stroke search, per-loop colours), AlponaCLI --kolam options, desktop K key, Source Explorer entry and README tour.",
     authorHandle: "ShimulCoding",
     authorEmail: "shimulc17@gmail.com",
+  },
+  {
+    cycle: 64,
+    title: "add README-driven Windows & Linux build checks and remove legacy push scripts",
+    schedule: "ci(windows)",
+    scope: "GitHub Actions runs RUN_STUDIO_WEB.bat, the FreeGLUT setup, RUN_CPP_DESKTOP.bat, both test suites and the CLI on a fresh Windows machine (and on Linux) for every push; removes push_to_github.sh/.ps1 and their Source Explorer panel.",
+    authorHandle: "dipro20debnath",
+    authorEmail: "diprodebnath200@gmail.com",
   },
 ];
 

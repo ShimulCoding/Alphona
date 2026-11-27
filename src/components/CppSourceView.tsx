@@ -1,10 +1,6 @@
 import { useState } from 'react';
-import { Check, Copy, GitCommitHorizontal, Terminal } from 'lucide-react';
-import {
-  CPP_PROJECT_FILES,
-  GIT_COMMIT_CYCLES,
-  GIT_PUSH_SCRIPTS,
-} from '../data/cppProjectFiles';
+import { Check, Copy, GitCommitHorizontal } from 'lucide-react';
+import { CPP_PROJECT_FILES, GIT_COMMIT_CYCLES } from '../data/cppProjectFiles';
 
 interface CppSourceViewProps {
   onReturnToStudio: () => void;
@@ -12,7 +8,6 @@ interface CppSourceViewProps {
 
 export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
   const [selectedFileId, setSelectedFileId] = useState(CPP_PROJECT_FILES[0].id);
-  const [scriptPlatform, setScriptPlatform] = useState<'bash' | 'powershell'>('bash');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const activeFile =
@@ -145,12 +140,12 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
         </div>
       </section>
 
-      {/* Git Commit Cycles & Push Script */}
-      <section aria-label="Git commit cycles and GitHub push workflow" className="space-y-5">
+      {/* Git Commit Cycles */}
+      <section aria-label="Git commit cycles" className="space-y-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold text-zinc-900">
-              {GIT_COMMIT_CYCLES.length}-Cycle Alternating Git Commit &amp; Push Workflow{' '}
+              {GIT_COMMIT_CYCLES.length}-Cycle Alternating Git Commit History{' '}
               <code className="font-mono text-sm font-normal text-zinc-500">
                 ShimulCoding/Alphona
               </code>
@@ -168,30 +163,6 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1">
-            <button
-              type="button"
-              onClick={() => setScriptPlatform('bash')}
-              className={`rounded px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
-                scriptPlatform === 'bash'
-                  ? 'bg-zinc-900 text-white'
-                  : 'text-zinc-600 hover:text-zinc-950'
-              }`}
-            >
-              Codespaces / Git Bash
-            </button>
-            <button
-              type="button"
-              onClick={() => setScriptPlatform('powershell')}
-              className={`rounded px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
-                scriptPlatform === 'powershell'
-                  ? 'bg-zinc-900 text-white'
-                  : 'text-zinc-600 hover:text-zinc-950'
-              }`}
-            >
-              Windows PowerShell
-            </button>
-          </div>
         </div>
 
         {/* Commit Cycles Timeline (one card per real git commit cycle) */}
@@ -232,44 +203,6 @@ export function CppSourceView({ onReturnToStudio }: CppSourceViewProps) {
           })}
         </div>
 
-        {/* Copyable Push Script */}
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3">
-            <div className="flex items-center gap-2 font-mono text-xs font-medium text-zinc-800">
-              <Terminal className="h-4 w-4 text-zinc-500" aria-hidden="true" />
-              <span>
-                {scriptPlatform === 'bash'
-                  ? 'cpp-alpona-studio/push_to_github.sh'
-                  : 'cpp-alpona-studio/push_to_github.ps1'}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                handleCopy(
-                  GIT_PUSH_SCRIPTS[scriptPlatform],
-                  `script-${scriptPlatform}`
-                )
-              }
-              className="inline-flex h-8 items-center gap-1.5 rounded border border-zinc-300 bg-white px-3 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 whitespace-nowrap shrink-0"
-            >
-              {copiedId === `script-${scriptPlatform}` ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-                  <span>Copied Script</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>Copy Script</span>
-                </>
-              )}
-            </button>
-          </div>
-          <pre className="max-h-[340px] overflow-auto bg-[#16161B] p-4 font-mono text-xs leading-relaxed text-zinc-100">
-            <code>{GIT_PUSH_SCRIPTS[scriptPlatform]}</code>
-          </pre>
-        </div>
       </section>
     </div>
   );
