@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alpona Studio — Interactive 2D Bengali Symmetry Art</title>
+    <title>Alpona Studio — Commercial 2D/3D Vector &amp; Raster Design Suite</title>
     <meta
       name="description"
-      content="An interactive 2D Bengali Alpona symmetry art and pattern design studio powered by Bresenham rasterization, 2D rotation and reflection, Cohen-Sutherland clipping, and iterative seed fill."
+      content="Alpona Studio Pro (v1.4.2): Commercial 2D/3D vector and raster design suite for real-time radial symmetry, multi-layer compositing, projective floor homography, and 3D relief fabrication."
     />
-    <meta property="og:title" content="Alpona Studio — Interactive 2D Bengali Symmetry Art" />
+    <meta property="og:title" content="Alpona Studio — Commercial 2D/3D Vector &amp; Raster Design Suite" />
     <meta
       property="og:description"
-      content="Draw Bengali alpona patterns in real time using custom Bresenham rasterization, dihedral and cyclic symmetry transforms, canvas clipping, and iterative seed fill."
+      content="Alpona Studio Pro (v1.4.2): Commercial 2D/3D vector and raster design suite for real-time radial symmetry, multi-layer compositing, projective floor homography, and 3D relief fabrication."
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -23,7 +23,54 @@
     />
   </head>
   <body class="bg-[#F6F5F1] text-[#18181B] antialiased selection:bg-[#B91C1C]/15 selection:text-[#7F1D1D]">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Pre-Hydration Branded Commercial Splash Screen (replaced seamlessly on React mount) -->
+      <div
+        role="status"
+        aria-label="Alpona Studio initializing"
+        style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F6F5F1;padding:16px;font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;color:#18181B;"
+      >
+        <div
+          style="width:100%;max-width:440px;background:#FFFFFF;border:1px solid #D4D4D8;border-radius:8px;padding:28px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.04);"
+        >
+          <div
+            style="width:80px;height:80px;margin:0 auto 20px;border-radius:9999px;background:#16161B;display:flex;align-items:center;justify-content:center;border:1px solid rgba(24,24,27,0.15);"
+          >
+            <svg viewBox="0 0 100 100" width="64" height="64" aria-hidden="true">
+              <circle cx="50" cy="50" r="43" fill="none" stroke="#FAF8F2" stroke-width="1.2" stroke-dasharray="2 2.5" opacity="0.7" />
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#F59E0B" stroke-width="1.2" opacity="0.85" />
+              <g>
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(45 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(90 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(135 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(180 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(225 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(270 50 50)" />
+                <path d="M 50 38 Q 56 24 50 14 Q 44 24 50 38 Z" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.35" transform="rotate(315 50 50)" />
+              </g>
+              <circle cx="50" cy="50" r="11" fill="#B91C1C" stroke="#FAF8F2" stroke-width="1.6" />
+              <circle cx="50" cy="50" r="4.5" fill="#F59E0B" />
+            </svg>
+          </div>
+          <div style="font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em;color:#09090B;">
+            Alpona Studio
+          </div>
+          <p style="margin:6px 0 0;font-size:12px;line-height:1.5;color:#52525B;">
+            Commercial 2D/3D Vector, Multi-Layer Compositing &amp; Spatial Projection Suite
+          </p>
+          <div style="margin-top:24px;text-align:left;">
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#52525B;margin-bottom:8px;">
+              <span>Initializing 8-Fold Symmetry Framebuffer…</span>
+              <span style="font-weight:600;color:#18181B;">25%</span>
+            </div>
+            <div style="height:6px;width:100%;background:#E4E4E7;border-radius:2px;overflow:hidden;">
+              <div style="height:100%;width:25%;background:#B91C1C;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
